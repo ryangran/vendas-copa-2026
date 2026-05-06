@@ -1,0 +1,9 @@
+# Credenciais e scripts com tokens — NUNCA subir para o GitHub
+atualizar-site.bat
+*.env
+.env*
+secrets.*
+
+# Sistema
+Thumbs.db
+.DS_Store

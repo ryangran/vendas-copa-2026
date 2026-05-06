@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vendas Copa 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --verde: #006400; --verde-claro: #00a651; --amarelo: #f5c518;
+    --amarelo-escuro: #c9a000; --azul: #003087; --bg: #f7f4ef;
+    --card: #ffffff; --texto: #1a1a1a; --sub: #666; --borda: #e2ddd6;
+    --zap: #25D366;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--texto); min-height: 100vh; }
+
+  header { background: var(--verde); position: relative; overflow: hidden; }
+  header::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(255,255,255,.03) 20px,rgba(255,255,255,.03) 40px); }
+  .header-inner { display:flex; align-items:center; justify-content:space-between; padding:22px 32px; position:relative; z-index:1; }
+  .header-left h1 { font-family:'Bebas Neue',sans-serif; font-size:2.4rem; color:var(--amarelo); letter-spacing:2px; line-height:1; }
+  .header-left p { color:rgba(255,255,255,.7); font-size:0.82rem; margin-top:3px; font-weight:300; }
+  .copa-badge { background:var(--amarelo); color:var(--verde); font-family:'Bebas Neue',sans-serif; font-size:1rem; padding:8px 16px; border-radius:4px; letter-spacing:2px; }
+
+  .summary-bar { background:var(--azul); padding:14px 32px; display:flex; gap:36px; flex-wrap:wrap; }
+  .sum-item { display:flex; flex-direction:column; }
+  .sum-label { font-size:0.68rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:rgba(255,255,255,.5); }
+  .sum-value { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; color:var(--amarelo); letter-spacing:1px; }
+
+  main { padding:26px 32px; max-width:1100px; margin:0 auto; }
+
+  .toolbar { display:flex; gap:10px; margin-bottom:22px; flex-wrap:wrap; align-items:center; }
+  .filters-label { font-size:0.73rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--sub); margin-right:2px; }
+  .filter-btn { padding:6px 15px; border-radius:100px; border:2px solid var(--borda); background:transparent; font-family:'DM Sans',sans-serif; font-size:0.78rem; font-weight:500; cursor:pointer; color:var(--sub); transition:all .15s; }
+  .filter-btn.active,.filter-btn:hover { background:var(--verde); border-color:var(--verde); color:#fff; }
+  .add-btn { padding:8px 18px; border-radius:100px; border:2px solid var(--amarelo); background:var(--amarelo); font-family:'DM Sans',sans-serif; font-size:0.8rem; font-weight:700; cursor:pointer; color:var(--verde); transition:all .15s; margin-left:auto; display:flex; align-items:center; gap:5px; }
+  .add-btn:hover { background:var(--amarelo-escuro); border-color:var(--amarelo-escuro); }
+
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:#1a1a1a; color:#fff; padding:12px 22px; border-radius:100px; font-size:0.85rem; font-weight:500; z-index:9999; transition:transform .3s ease; pointer-events:none; white-space:nowrap; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:15px; }
+  .no-results { grid-column:1/-1; text-align:center; padding:48px; color:var(--sub); font-size:0.9rem; }
+
+  .card { background:var(--card); border:1.5px solid var(--borda); border-radius:12px; overflow:hidden; transition:transform .15s,box-shadow .15s; }
+  .card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.09); }
+  .card.pago { border-color:var(--verde-claro); background:#f0fff6; }
+
+  .card-header { display:flex; align-items:center; justify-content:space-between; padding:15px 17px 11px; border-bottom:1px solid var(--borda); gap:8px; }
+  .client-avatar { width:36px; height:36px; border-radius:50%; background:var(--verde); color:#fff; font-family:'Bebas Neue',sans-serif; font-size:1.1rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .card.pago .client-avatar { background:var(--verde-claro); }
+  .client-info { flex:1; min-width:0; }
+  .client-name { font-weight:600; font-size:0.93rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .client-ref { font-size:0.7rem; color:var(--sub); }
+  .status-badge { font-size:0.66rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; padding:4px 10px; border-radius:100px; background:#fef3c7; color:#92400e; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:all .15s; white-space:nowrap; flex-shrink:0; }
+  .status-badge.pago { background:#d1fae5; color:#065f46; }
+
+  .card-body { padding:12px 17px; }
+  .item-line { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed var(--borda); }
+  .item-line:last-child { border-bottom:none; }
+  .item-desc { font-size:0.8rem; color:var(--sub); display:flex; align-items:center; gap:5px; }
+  .item-price { font-size:0.8rem; font-weight:600; }
+
+  .entrega-row { display:flex; align-items:center; gap:8px; padding:9px 17px 0; }
+  .entrega-label { font-size:0.68rem; color:var(--sub); font-weight:600; text-transform:uppercase; letter-spacing:1px; white-space:nowrap; }
+  .entrega-select { font-family:'DM Sans',sans-serif; font-size:0.73rem; padding:4px 7px; border:1.5px solid var(--borda); border-radius:6px; background:#fff; color:var(--texto); cursor:pointer; flex:1; }
+
+  .card-footer { padding:11px 17px 0; background:#fafafa; border-top:1.5px solid var(--borda); display:flex; justify-content:space-between; align-items:center; }
+  .card.pago .card-footer { background:#e8fdf2; }
+  .total-label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--sub); }
+  .total-value { font-family:'Bebas Neue',sans-serif; font-size:1.35rem; color:var(--verde); letter-spacing:1px; }
+
+  .card-actions { display:flex; justify-content:space-between; align-items:center; padding:8px 17px 11px; background:inherit; }
+  .action-left { display:flex; gap:6px; }
+  .zap-btn { display:flex; align-items:center; gap:5px; padding:5px 12px; border-radius:100px; background:var(--zap); color:#fff; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:0.72rem; font-weight:600; transition:all .15s; }
+  .zap-btn:hover { background:#1da851; }
+  .edit-btn { display:flex; align-items:center; gap:5px; padding:5px 12px; border-radius:100px; background:#f0f0f0; color:#444; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:0.72rem; font-weight:600; transition:all .15s; }
+  .edit-btn:hover { background:#e0e0e0; }
+  .del-btn { font-size:0.68rem; color:#c00; background:none; border:none; cursor:pointer; opacity:0.45; transition:opacity .15s; font-family:'DM Sans',sans-serif; }
+  .del-btn:hover { opacity:1; }
+
+  .totals-banner { margin-top:20px; background:var(--verde); border-radius:12px; padding:18px 22px; display:flex; gap:30px; flex-wrap:wrap; }
+  .totals-banner .sum-label { color:rgba(255,255,255,.55); }
+  .totals-banner .sum-value { font-size:1.9rem; color:var(--amarelo); }
+
+  .preco-section { margin-top:26px; background:var(--card); border:1.5px solid var(--borda); border-radius:12px; overflow:hidden; }
+  .section-title { padding:14px 20px; font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:2px; color:var(--verde); border-bottom:1px solid var(--borda); background:#fafafa; }
+  .price-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); }
+  .price-item { padding:14px 18px; border-right:1px solid var(--borda); border-bottom:1px solid var(--borda); }
+  .price-name { font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--sub); margin-bottom:3px; }
+  .price-val { font-family:'Bebas Neue',sans-serif; font-size:1.45rem; color:var(--texto); }
+
+  /* ===== MODAIS ===== */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; align-items:center; justify-content:center; padding:16px; }
+  .modal-overlay.open { display:flex; }
+  .modal-box { background:#fff; border-radius:16px; padding:26px 24px; width:100%; max-width:430px; max-height:92vh; overflow-y:auto; position:relative; animation:slideUp .2s ease; }
+  @keyframes slideUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+  .modal-close { position:absolute; top:14px; right:16px; background:#f0f0f0; border:none; width:28px; height:28px; border-radius:50%; font-size:.95rem; cursor:pointer; color:#555; display:flex; align-items:center; justify-content:center; }
+  .modal-close:hover { background:#e0e0e0; }
+  .modal-title { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; color:var(--verde); letter-spacing:2px; margin-bottom:20px; }
+
+  .m-group { margin-bottom:13px; }
+  .m-label { font-size:0.69rem; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--sub); display:block; margin-bottom:5px; }
+  .m-input { width:100%; padding:9px 12px; border:1.5px solid var(--borda); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:0.88rem; outline:none; transition:border-color .15s; }
+  .m-input:focus { border-color:var(--verde); }
+
+  .albums-section { margin-bottom:15px; }
+  .albums-title { font-size:0.69rem; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--sub); margin-bottom:9px; display:block; }
+  .album-row { display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px dashed var(--borda); }
+  .album-row:last-child { border-bottom:none; }
+  .album-row-label { font-size:0.82rem; color:var(--texto); }
+  .album-price-hint { font-size:0.7rem; color:var(--sub); display:block; }
+
+  .qty-control { display:flex; align-items:center; gap:6px; }
+  .qty-btn { width:26px; height:26px; border-radius:50%; border:1.5px solid var(--borda); background:#fff; font-size:1rem; cursor:pointer; color:var(--verde); display:flex; align-items:center; justify-content:center; font-weight:700; transition:all .1s; flex-shrink:0; }
+  .qty-btn:hover { background:var(--verde); color:#fff; border-color:var(--verde); }
+  .qty-input { width:52px; padding:4px 6px; border:1.5px solid var(--borda); border-radius:6px; font-family:'Bebas Neue',sans-serif; font-size:1.1rem; text-align:center; color:var(--texto); outline:none; transition:border-color .15s; }
+  .qty-input:focus { border-color:var(--verde); }
+
+  .m-preview { margin:13px 0; padding:13px; background:#f7f4ef; border-radius:10px; font-size:0.82rem; color:#444; border-left:3px solid var(--verde-claro); line-height:1.8; }
+  .m-preview-empty { color:#999; font-style:italic; }
+  .m-erro { color:#c00; font-size:0.78rem; margin-bottom:9px; }
+  .m-save { width:100%; padding:13px; background:var(--verde); color:#fff; border:none; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:2px; cursor:pointer; transition:background .15s; }
+  .m-save:hover { background:#004d00; }
+
+  /* ZAP MODAL */
+  .zap-modal-box { background:#fff; border-radius:16px; padding:24px 22px; width:100%; max-width:360px; position:relative; animation:slideUp .2s ease; }
+  .zap-modal-title { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; color:var(--zap); letter-spacing:2px; margin-bottom:6px; }
+  .zap-client-name { font-size:0.82rem; color:var(--sub); margin-bottom:18px; }
+  .zap-option { display:flex; align-items:center; gap:12px; padding:13px 14px; border-radius:10px; border:1.5px solid var(--borda); margin-bottom:10px; cursor:pointer; transition:all .15s; text-decoration:none; color:var(--texto); }
+  .zap-option:hover { border-color:var(--zap); background:#f0fff4; }
+  .zap-option-icon { font-size:1.4rem; flex-shrink:0; }
+  .zap-option-info { flex:1; }
+  .zap-option-label { font-size:0.88rem; font-weight:600; color:var(--texto); }
+  .zap-option-desc { font-size:0.72rem; color:var(--sub); margin-top:2px; }
+  .zap-no-phone { background:#fff8e1; border-radius:10px; padding:14px; font-size:0.82rem; color:#7a6000; text-align:center; line-height:1.5; }
+
+  /* CONFIRM */
+  .confirm-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:2000; align-items:center; justify-content:center; padding:16px; }
+  .confirm-overlay.open { display:flex; }
+  .confirm-box { background:#fff; border-radius:14px; padding:28px 24px; width:100%; max-width:340px; text-align:center; animation:slideUp .2s ease; }
+  .confirm-title { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; color:#c00; letter-spacing:1px; margin-bottom:10px; }
+  .confirm-msg { font-size:0.88rem; color:#555; margin-bottom:22px; line-height:1.5; }
+  .confirm-btns { display:flex; gap:10px; }
+  .confirm-btn { flex:1; padding:11px; border-radius:8px; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:0.88rem; font-weight:600; }
+  .confirm-btn.cancel { background:#f0f0f0; color:#555; }
+  .confirm-btn.danger { background:#c00; color:#fff; }
+
+  @media(max-width:600px){
+    .header-inner{padding:18px 16px;} .header-left h1{font-size:1.9rem;}
+    .summary-bar{padding:12px 16px;gap:18px;} main{padding:18px 16px;}
+    .grid{grid-template-columns:1fr;} .add-btn{margin-left:0;width:100%;justify-content:center;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-left"><h1>⚽ Vendas Copa</h1><p>Controle de pedidos — Figurinhas & Álbuns</p></div>
+    <div class="copa-badge">2026</div>
+  </div>
+</header>
+<div class="summary-bar" id="summaryBar"></div>
+
+<main>
+  <div class="toolbar">
+    <span class="filters-label">Filtrar:</span>
+    <button class="filter-btn active" data-filtro="todos" onclick="filtrar(this)">Todos</button>
+    <button class="filter-btn" data-filtro="pendente" onclick="filtrar(this)">Pendente</button>
+    <button class="filter-btn" data-filtro="pago" onclick="filtrar(this)">Pago</button>
+    <button class="filter-btn" data-filtro="entregue" onclick="filtrar(this)">Entregue</button>
+    <button class="add-btn" onclick="abrirModal()">➕ Novo Cliente</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="totals-banner" id="totalsBanner"></div>
+  <div class="preco-section">
+    <div class="section-title">📋 Preços, Custos & Margem</div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+      <thead>
+        <tr style="background:#fafafa;border-bottom:2px solid var(--borda);">
+          <th style="padding:10px 18px;text-align:left;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--sub);font-weight:700;">Produto</th>
+          <th style="padding:10px 14px;text-align:right;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--sub);font-weight:700;">Venda</th>
+          <th style="padding:10px 14px;text-align:right;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--sub);font-weight:700;">Custo</th>
+          <th style="padding:10px 14px;text-align:right;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--sub);font-weight:700;">Lucro/un</th>
+          <th style="padding:10px 14px;text-align:right;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--sub);font-weight:700;">Margem</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaPrecos"></tbody>
+    </table>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<!-- MODAL CLIENTE (add/edit) -->
+<div class="modal-overlay" id="modal" onclick="clickOverlay(event,'modal')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="fecharModal()">✕</button>
+    <div class="modal-title" id="modal-title">➕ Novo Cliente</div>
+    <input type="hidden" id="m-editid" value="">
+
+    <div class="m-group">
+      <label class="m-label">Nome *</label>
+      <input class="m-input" id="m-nome" type="text" placeholder="Ex: Maria" oninput="atualizarPreview()">
+    </div>
+    <div class="m-group">
+      <label class="m-label">Referência / Apelido</label>
+      <input class="m-input" id="m-ref" type="text" placeholder="Ex: K23, UNA, vizinha... (opcional)">
+    </div>
+    <div class="m-group">
+      <label class="m-label">WhatsApp (opcional)</label>
+      <input class="m-input" id="m-tel" type="tel" placeholder="Ex: 11999998888 (só números)">
+    </div>
+    <div class="m-group">
+      <label class="m-label">Pacotinhos de Figurinha</label>
+      <div class="qty-control">
+        <button class="qty-btn" onclick="changeQty('pacotes',-1)">−</button>
+        <input class="qty-input" id="disp-pacotes" type="number" min="0" value="0" oninput="syncQty('pacotes',this.value)" onchange="atualizarPreview()">
+        <button class="qty-btn" onclick="changeQty('pacotes',1)">+</button>
+        <span style="font-size:0.73rem;color:var(--sub);">× R$ 5,80</span>
+      </div>
+    </div>
+
+    <div class="albums-section">
+      <span class="albums-title">📚 Álbuns</span>
+      <div class="album-row">
+        <div class="album-row-label">Capa Mole<span class="album-price-hint">R$ 20,92 cada</span></div>
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeQty('capaMole',-1)">−</button>
+          <input class="qty-input" id="disp-capaMole" type="number" min="0" value="0" oninput="syncQty('capaMole',this.value)" onchange="atualizarPreview()">
+          <button class="qty-btn" onclick="changeQty('capaMole',1)">+</button>
+        </div>
+      </div>
+      <div class="album-row">
+        <div class="album-row-label">Capa Dura Normal<span class="album-price-hint">R$ 61,62 cada</span></div>
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeQty('capaDuraNormal',-1)">−</button>
+          <input class="qty-input" id="disp-capaDuraNormal" type="number" min="0" value="0" oninput="syncQty('capaDuraNormal',this.value)" onchange="atualizarPreview()">
+          <button class="qty-btn" onclick="changeQty('capaDuraNormal',1)">+</button>
+        </div>
+      </div>
+      <div class="album-row">
+        <div class="album-row-label">Capa Dura Prata<span class="album-price-hint">R$ 65,92 cada</span></div>
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeQty('capaDuraPrata',-1)">−</button>
+          <input class="qty-input" id="disp-capaDuraPrata" type="number" min="0" value="0" oninput="syncQty('capaDuraPrata',this.value)" onchange="atualizarPreview()">
+          <button class="qty-btn" onclick="changeQty('capaDuraPrata',1)">+</button>
+        </div>
+      </div>
+      <div class="album-row">
+        <div class="album-row-label">Capa Dura Ouro ✨<span class="album-price-hint">R$ 66,92 cada</span></div>
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeQty('capaDuraOuro',-1)">−</button>
+          <input class="qty-input" id="disp-capaDuraOuro" type="number" min="0" value="0" oninput="syncQty('capaDuraOuro',this.value)" onchange="atualizarPreview()">
+          <button class="qty-btn" onclick="changeQty('capaDuraOuro',1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="m-preview" id="m-preview"><span class="m-preview-empty">Preencha os campos para ver o resumo do pedido.</span></div>
+    <div class="m-erro" id="m-erro" style="display:none">⚠️ Por favor, informe o nome do cliente.</div>
+    <button class="m-save" onclick="salvarCliente()">✅ SALVAR CLIENTE</button>
+  </div>
+</div>
+
+<!-- ZAP MODAL -->
+<div class="modal-overlay" id="zapModal" onclick="clickOverlay(event,'zapModal')">
+  <div class="zap-modal-box">
+    <button class="modal-close" onclick="fecharZap()">✕</button>
+    <div class="zap-modal-title">💬 WhatsApp</div>
+    <div class="zap-client-name" id="zap-client-name"></div>
+    <div style="background:#f0fff4;border:1px solid #b7ebc8;border-radius:8px;padding:10px 13px;font-size:0.75rem;color:#065f46;margin-bottom:14px;">
+      Clique na mensagem desejada: ela sera <strong>copiada automaticamente</strong> e o WhatsApp sera aberto. Basta colar (segurar e colar) na conversa.
+    </div>
+    <div id="zap-options"></div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="confirm-overlay" id="confirmModal">
+  <div class="confirm-box">
+    <div class="confirm-title">🗑️ Remover Cliente</div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-btns">
+      <button class="confirm-btn cancel" onclick="fecharConfirm()">Cancelar</button>
+      <button class="confirm-btn danger" onclick="confirmarDelete()">Remover</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'vendas_copa_2026';
+const PIX_CHAVE = '61.986.179/0001-92';
+const PIX_NOME = 'Ryan Granchelli';
+
+const PRECOS = { pacote:5.80, capaMole:20.92, capaDuraNormal:61.62, capaDuraPrata:65.92, capaDuraOuro:66.92 };
+const CUSTOS = { pacote:5.60, capaMole:19.92, capaDuraNormal:59.62, capaDuraPrata:63.92, capaDuraOuro:63.92 };
+const TIPO_LABEL = { capaMole:'Álbum Capa Mole', capaDuraNormal:'Álbum Capa Dura Normal', capaDuraPrata:'Álbum Capa Dura Prata', capaDuraOuro:'Álbum Capa Dura Ouro ✨' };
+
+const CLIENTES_INICIAIS = [
+  {nome:'Cris',ref:'',tel:'',pacotes:70,albums:[]},
+  {nome:'Ediane',ref:'UNA',tel:'',pacotes:13,albums:[{tipo:'capaMole',qtd:1}]},
+  {nome:'Denise',ref:'',tel:'',pacotes:40,albums:[]},
+  {nome:'Rogéria',ref:'',tel:'',pacotes:10,albums:[{tipo:'capaDuraOuro',qtd:1}]},
+  {nome:'Helena',ref:'Neta da Elenice',tel:'',pacotes:10,albums:[{tipo:'capaMole',qtd:1}]},
+  {nome:'Raissa',ref:'UNA',tel:'',pacotes:17,albums:[]},
+  {nome:'Paula',ref:'K21',tel:'',pacotes:40,albums:[]},
+  {nome:'Murilo',ref:'',tel:'',pacotes:30,albums:[{tipo:'capaMole',qtd:1}]},
+  {nome:'Ediana',ref:'K25',tel:'',pacotes:20,albums:[{tipo:'capaMole',qtd:1}]},
+  {nome:'Enrico',ref:'',tel:'',pacotes:15,albums:[]},
+  {nome:'Tiana',ref:'',tel:'',pacotes:8,albums:[{tipo:'capaMole',qtd:2}]},
+  {nome:'Ariany',ref:'',tel:'',pacotes:50,albums:[]},
+  {nome:'Bianca',ref:'',tel:'',pacotes:10,albums:[{tipo:'capaDuraOuro',qtd:1}]},
+];
+
+function calcTotal(c) {
+  let t = c.pacotes * PRECOS.pacote;
+  c.albums.forEach(a => { t += a.qtd * PRECOS[a.tipo]; });
+  return t;
+}
+function calcCusto(c) {
+  let t = c.pacotes * CUSTOS.pacote;
+  c.albums.forEach(a => { t += a.qtd * CUSTOS[a.tipo]; });
+  return t;
+}
+function fmt(n) { return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+function resumoPedido(c) {
+  const linhas = [];
+  if (c.pacotes > 0) linhas.push(c.pacotes + 'x pacotinho de figurinha');
+  c.albums.forEach(a => linhas.push(a.qtd + 'x ' + TIPO_LABEL[a.tipo]));
+  return linhas.join(', ');
+}
+
+/* ---- ESTADO ---- */
+let estado = [], nextId = 0, filtroAtual = 'todos', deleteId = null;
+
+function carregarDados() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      estado = (d.clientes || []).map(c => ({ tel:'', ...c, total: calcTotal(c) }));
+      nextId = d.nextId || estado.length;
+      return;
+    }
+  } catch(e) {}
+  estado = CLIENTES_INICIAIS.map((c,i) => ({...c,id:i,pago:false,entrega:'pendente',total:calcTotal(c)}));
+  nextId = estado.length;
+  salvarDados();
+}
+function salvarDados() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({clientes:estado, nextId})); }
+  catch(e) { showToast('⚠️ Erro ao salvar!'); }
+}
+
+/* ---- FILTRO ---- */
+function filtrar(btn) {
+  filtroAtual = btn.dataset.filtro;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active'); renderGrid();
+}
+
+function togglePago(id) {
+  const c = estado.find(x=>x.id===id); if(!c) return;
+  c.pago = !c.pago; salvarDados(); renderAll();
+  showToast(c.pago ? '✅ '+c.nome+' marcado como pago!' : '↩️ '+c.nome+' voltou para pendente');
+}
+function setEntrega(id, val) {
+  const c = estado.find(x=>x.id===id); if(!c) return;
+  c.entrega = val; salvarDados(); renderAll();
+  const labels={pendente:'⏳ Pendente',separado:'📦 Separado',entregue:'🏠 Entregue'};
+  showToast(c.nome+': '+(labels[val]||val));
+}
+
+/* ---- DELETE ---- */
+function pedirDelete(id) {
+  const c = estado.find(x=>x.id===id); if(!c) return;
+  deleteId = id;
+  document.getElementById('confirmMsg').textContent = 'Remover "'+c.nome+'" da lista? Esta ação não pode ser desfeita.';
+  document.getElementById('confirmModal').classList.add('open');
+}
+function fecharConfirm() { deleteId=null; document.getElementById('confirmModal').classList.remove('open'); }
+function confirmarDelete() {
+  if(deleteId===null) return;
+  const c = estado.find(x=>x.id===deleteId);
+  estado = estado.filter(x=>x.id!==deleteId);
+  salvarDados(); fecharConfirm(); renderAll();
+  if(c) showToast('🗑️ '+c.nome+' removido(a)');
+}
+
+/* ---- ZAP ---- */
+function abrirZap(id) {
+  const c = estado.find(x=>x.id===id); if(!c) return;
+  const total = fmt(c.total);
+  const resumo = resumoPedido(c);
+  const num = (c.tel||'').replace(/\D/g,'');
+
+  document.getElementById('zap-client-name').textContent = 'Para: '+c.nome+(c.ref?' ('+c.ref+')':'');
+
+    const E = {
+    trofeu:   String.fromCodePoint(0x1F3C6),
+    brasil:   String.fromCodePoint(0x1F1E7) + String.fromCodePoint(0x1F1F7),
+    caixa:    String.fromCodePoint(0x1F4E6),
+    dinheiro: String.fromCodePoint(0x1F4B0),
+    chave:    String.fromCodePoint(0x1F511),
+    pessoa:   String.fromCodePoint(0x1F464),
+    maos:     String.fromCodePoint(0x1F64F),
+    sorriso:  String.fromCodePoint(0x1F604),
+    foguete:  String.fromCodePoint(0x1F680),
+  };
+
+  const msgs = [
+    {
+      icon: E.dinheiro,
+      label:'Cobrança Pix',
+      desc:'Enviar valor total + chave Pix',
+      texto: 'Olá, '+c.nome+'! '+E.trofeu+E.brasil+'\n\nPassando para confirmar o valor do seu pedido das figurinhas da Copa:\n\n'+E.caixa+' *Pedido:* '+resumo+'\n'+E.dinheiro+' *Total: '+total+'*\n\nPara pagamento via Pix:\n'+E.chave+' *Chave:* '+PIX_CHAVE+'\n'+E.pessoa+' *Beneficiário:* '+PIX_NOME+'\n\nQualquer dúvida é só falar! '+E.maos
+    },
+    {
+      icon: '✅',
+      label:'Confirmar Pedido',
+      desc:'Enviar resumo do pedido para confirmar',
+      texto: 'Olá, '+c.nome+'! '+E.trofeu+E.brasil+'\n\nPassando para confirmar o seu pedido das figurinhas da Copa do Mundo:\n\n'+E.caixa+' *'+resumo+'*\n'+E.dinheiro+' *Total: '+total+'*\n\nEstá certo assim? Me confirma para eu separar! '+E.sorriso
+    },
+    {
+      icon: E.foguete,
+      label:'Pedido Chegou!',
+      desc:'Avisar que o pedido chegou',
+      texto: 'Boa notícia, '+c.nome+'! '+E.trofeu+E.brasil+'\n\nSeu pedido das figurinhas da Copa chegou e já está separadinho:\n\n'+E.caixa+' *'+resumo+'*\n\nCombina de nos falar quando puder retirar! '+E.sorriso
+    }
+  ];
+
+  // Store msgs globally so buttons can access them
+  window._zapMsgs = msgs;
+  window._zapNum = num;
+  window._zapNome = c.nome;
+
+  if (!num) {
+    document.getElementById('zap-options').innerHTML =
+      '<div class="zap-no-phone">Nenhum numero cadastrado para <strong>'+c.nome+'</strong>.<br><br>Edite o cliente para adicionar o WhatsApp.</div>';
+  } else {
+    document.getElementById('zap-options').innerHTML = msgs.map((m,i) => {
+      return '<div class="zap-option" onclick="enviarZap('+i+')">'+
+        '<div class="zap-option-icon">'+m.icon+'</div>'+
+        '<div class="zap-option-info">'+
+          '<div class="zap-option-label">'+m.label+'</div>'+
+          '<div class="zap-option-desc">'+m.desc+'</div>'+
+        '</div>'+
+        '<span style="color:var(--zap);font-size:1rem;">&#8594;</span>'+
+      '</div>';
+    }).join('');
+  }
+
+  document.getElementById('zapModal').classList.add('open');
+}
+function enviarZap(i) {
+  const m = window._zapMsgs[i];
+  const num = window._zapNum;
+  const texto = m.texto;
+  // Copy to clipboard
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(texto).then(function() {
+      showToast('Mensagem copiada! Abrindo WhatsApp...');
+    }).catch(function() {
+      showToast('Abrindo WhatsApp...');
+    });
+  } else {
+    // fallback
+    var ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); showToast('Mensagem copiada! Abrindo WhatsApp...'); }
+    catch(e) { showToast('Abrindo WhatsApp...'); }
+    document.body.removeChild(ta);
+  }
+  setTimeout(function() {
+    window.open('https://wa.me/55' + num, '_blank');
+  }, 400);
+  fecharZap();
+}
+
+function fecharZap() { document.getElementById('zapModal').classList.remove('open'); }
+
+/* ---- MODAL ADD/EDIT ---- */
+const qtys = {pacotes:0,capaMole:0,capaDuraNormal:0,capaDuraPrata:0,capaDuraOuro:0};
+
+function syncQty(key, val) {
+  qtys[key] = Math.max(0, parseInt(val)||0);
+  atualizarPreview();
+}
+function changeQty(key, delta) {
+  qtys[key] = Math.max(0, qtys[key]+delta);
+  document.getElementById('disp-'+key).value = qtys[key];
+  atualizarPreview();
+}
+function resetModal() {
+  Object.keys(qtys).forEach(k => { qtys[k]=0; document.getElementById('disp-'+k).value=0; });
+  document.getElementById('m-nome').value='';
+  document.getElementById('m-ref').value='';
+  document.getElementById('m-tel').value='';
+  document.getElementById('m-editid').value='';
+  document.getElementById('m-preview').innerHTML='<span class="m-preview-empty">Preencha os campos para ver o resumo do pedido.</span>';
+  document.getElementById('m-erro').style.display='none';
+  document.getElementById('modal-title').textContent='➕ Novo Cliente';
+}
+function abrirModal() {
+  resetModal();
+  document.getElementById('modal').classList.add('open');
+  setTimeout(()=>document.getElementById('m-nome').focus(),150);
+}
+function abrirEditar(id) {
+  const c = estado.find(x=>x.id===id); if(!c) return;
+  resetModal();
+  document.getElementById('modal-title').textContent='✏️ Editar Cliente';
+  document.getElementById('m-editid').value=id;
+  document.getElementById('m-nome').value=c.nome;
+  document.getElementById('m-ref').value=c.ref||'';
+  document.getElementById('m-tel').value=c.tel||'';
+  // preenche qtys
+  qtys.pacotes=c.pacotes;
+  document.getElementById('disp-pacotes').value=c.pacotes;
+  const tiposAlbum=['capaMole','capaDuraNormal','capaDuraPrata','capaDuraOuro'];
+  tiposAlbum.forEach(t=>{
+    const a=c.albums.find(x=>x.tipo===t);
+    qtys[t]=a?a.qtd:0;
+    document.getElementById('disp-'+t).value=qtys[t];
+  });
+  atualizarPreview();
+  document.getElementById('modal').classList.add('open');
+  setTimeout(()=>document.getElementById('m-nome').focus(),150);
+}
+function fecharModal() { document.getElementById('modal').classList.remove('open'); }
+function clickOverlay(e, id) { if(e.target===document.getElementById(id)) { if(id==='modal') fecharModal(); else if(id==='zapModal') fecharZap(); } }
+
+function atualizarPreview() {
+  const pacotes=qtys.pacotes;
+  const albums=[
+    {tipo:'capaMole',qtd:qtys.capaMole},{tipo:'capaDuraNormal',qtd:qtys.capaDuraNormal},
+    {tipo:'capaDuraPrata',qtd:qtys.capaDuraPrata},{tipo:'capaDuraOuro',qtd:qtys.capaDuraOuro}
+  ].filter(a=>a.qtd>0);
+  const total=calcTotal({pacotes,albums});
+  const itens=[];
+  if(pacotes>0) itens.push('🎴 '+pacotes+'x Pacotinho — <strong>'+fmt(pacotes*PRECOS.pacote)+'</strong>');
+  albums.forEach(a=>itens.push('📚 '+a.qtd+'x '+TIPO_LABEL[a.tipo]+' — <strong>'+fmt(a.qtd*PRECOS[a.tipo])+'</strong>'));
+  const prev=document.getElementById('m-preview');
+  if(itens.length===0) { prev.innerHTML='<span class="m-preview-empty">Preencha os campos para ver o resumo do pedido.</span>'; return; }
+  prev.innerHTML=itens.join('<br>')+'<br><span style="color:var(--verde);font-weight:700;font-size:.93rem;">Total: '+fmt(total)+'</span>';
+}
+
+function salvarCliente() {
+  const nome=document.getElementById('m-nome').value.trim();
+  const erro=document.getElementById('m-erro');
+  if(!nome){ erro.style.display='block'; document.getElementById('m-nome').focus(); return; }
+  erro.style.display='none';
+  const pacotes=qtys.pacotes;
+  const albums=[
+    {tipo:'capaMole',qtd:qtys.capaMole},{tipo:'capaDuraNormal',qtd:qtys.capaDuraNormal},
+    {tipo:'capaDuraPrata',qtd:qtys.capaDuraPrata},{tipo:'capaDuraOuro',qtd:qtys.capaDuraOuro}
+  ].filter(a=>a.qtd>0);
+  const tel=(document.getElementById('m-tel').value||'').replace(/\D/g,'');
+  const editId=document.getElementById('m-editid').value;
+
+  if(editId!=='') {
+    const id=parseInt(editId);
+    const c=estado.find(x=>x.id===id);
+    if(c){ Object.assign(c,{nome,ref:document.getElementById('m-ref').value.trim(),tel,pacotes,albums,total:calcTotal({pacotes,albums})}); }
+    salvarDados(); fecharModal(); renderAll(); showToast('✏️ '+nome+' atualizado(a)!');
+  } else {
+    estado.push({id:nextId++,nome,ref:document.getElementById('m-ref').value.trim(),tel,pacotes,albums,pago:false,entrega:'pendente',total:calcTotal({pacotes,albums})});
+    salvarDados(); fecharModal();
+    filtroAtual='todos';
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelector('[data-filtro="todos"]').classList.add('active');
+    renderAll(); showToast('✅ '+nome+' adicionado(a)!');
+  }
+}
+
+/* ---- RENDER ---- */
+function renderGrid() {
+  const grid=document.getElementById('grid');
+  let lista=estado;
+  if(filtroAtual==='pendente') lista=estado.filter(c=>!c.pago);
+  if(filtroAtual==='pago')    lista=estado.filter(c=>c.pago);
+  if(filtroAtual==='entregue')lista=estado.filter(c=>c.entrega==='entregue');
+  if(lista.length===0){ grid.innerHTML='<div class="no-results">Nenhum cliente nessa categoria.</div>'; return; }
+
+  grid.innerHTML=lista.map(c=>{
+    const isPago=c.pago;
+    const itens=[];
+    if(c.pacotes>0) itens.push('<div class="item-line"><div class="item-desc"><span>🎴</span>'+c.pacotes+'x Pacotinho</div><div class="item-price">'+fmt(c.pacotes*PRECOS.pacote)+'</div></div>');
+    c.albums.forEach(a=>itens.push('<div class="item-line"><div class="item-desc"><span>📚</span>'+a.qtd+'x '+TIPO_LABEL[a.tipo]+'</div><div class="item-price">'+fmt(a.qtd*PRECOS[a.tipo])+'</div></div>'));
+    const entregaOpts=['pendente','separado','entregue'].map(e=>'<option value="'+e+'"'+(c.entrega===e?' selected':'')+'>'+e.charAt(0).toUpperCase()+e.slice(1)+'</option>').join('');
+    const temTel=(c.tel||'').replace(/\D/g,'').length>0;
+    return '<div class="card'+(isPago?' pago':'')+'" id="card-'+c.id+'">'+
+      '<div class="card-header">'+
+        '<div class="client-avatar">'+c.nome.charAt(0).toUpperCase()+'</div>'+
+        '<div class="client-info"><div class="client-name">'+c.nome+'</div>'+(c.ref?'<div class="client-ref">'+c.ref+'</div>':'')+'</div>'+
+        '<button class="status-badge'+(isPago?' pago':'')+'" onclick="togglePago('+c.id+')">'+(isPago?'Pago ✓':'Pendente')+'</button>'+
+      '</div>'+
+      '<div class="card-body">'+(itens.join('')||'<div style="font-size:.8rem;color:#999;padding:3px 0">Sem itens</div>')+'</div>'+
+      '<div class="entrega-row"><span class="entrega-label">Entrega:</span><select class="entrega-select" onchange="setEntrega('+c.id+',this.value)">'+entregaOpts+'</select></div>'+
+      '<div class="card-footer"><div class="total-label">Total</div><div class="total-value">'+fmt(c.total)+'</div></div>'+
+      '<div class="card-actions">'+
+        '<div class="action-left">'+
+          '<button class="zap-btn" onclick="abrirZap('+c.id+')" title="'+(temTel?'Enviar mensagem':'Sem número cadastrado')+'">'+
+            (temTel?'<span>📱</span> WhatsApp':'<span>📵</span> Sem número')+
+          '</button>'+
+          '<button class="edit-btn" onclick="abrirEditar('+c.id+')">✏️ Editar</button>'+
+        '</div>'+
+        '<button class="del-btn" onclick="pedirDelete('+c.id+')">🗑️ remover</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function renderSummary() {
+  const totalGeral   = estado.reduce((s,c)=>s+c.total,0);
+  const totalPacotes = estado.reduce((s,c)=>s+c.pacotes,0);
+  const totalAlbuns  = estado.reduce((s,c)=>s+c.albums.reduce((a,al)=>a+al.qtd,0),0);
+  const totalPago    = estado.filter(c=>c.pago).reduce((s,c)=>s+c.total,0);
+  const totalCusto   = estado.reduce((s,c)=>s+calcCusto(c),0);
+  const lucroTotal   = totalGeral - totalCusto;
+  const lucroRecebido= estado.filter(c=>c.pago).reduce((s,c)=>s+(c.total-calcCusto(c)),0);
+  const pct = totalGeral>0 ? ((lucroTotal/totalGeral)*100).toFixed(1) : '0.0';
+
+  document.getElementById('summaryBar').innerHTML=
+    '<div class="sum-item"><div class="sum-label">Clientes</div><div class="sum-value">'+estado.length+'</div></div>'+
+    '<div class="sum-item"><div class="sum-label">Pacotinhos</div><div class="sum-value">'+totalPacotes+'</div></div>'+
+    '<div class="sum-item"><div class="sum-label">Álbuns</div><div class="sum-value">'+totalAlbuns+'</div></div>'+
+    '<div class="sum-item"><div class="sum-label">Faturamento Total</div><div class="sum-value">'+fmt(totalGeral)+'</div></div>';
+
+  document.getElementById('totalsBanner').innerHTML=
+    '<div class="sum-item"><div class="sum-label">💰 Total a Receber</div><div class="sum-value">'+fmt(totalGeral)+'</div></div>'+
+    '<div class="sum-item"><div class="sum-label">✅ Já Recebido</div><div class="sum-value">'+fmt(totalPago)+'</div></div>'+
+    '<div class="sum-item"><div class="sum-label">⏳ Ainda Pendente</div><div class="sum-value">'+fmt(totalGeral-totalPago)+'</div></div>'+
+    '<div class="sum-item" style="border-left:2px solid rgba(255,255,255,.2);padding-left:28px;margin-left:4px;">'+
+      '<div class="sum-label">📦 Custo Total</div><div class="sum-value" style="color:rgba(255,255,255,.75)">'+fmt(totalCusto)+'</div>'+
+    '</div>'+
+    '<div class="sum-item">'+
+      '<div class="sum-label">🤑 Lucro Projetado</div>'+
+      '<div class="sum-value" style="color:#7dffb0">'+fmt(lucroTotal)+'</div>'+
+    '</div>'+
+    '<div class="sum-item">'+
+      '<div class="sum-label">✅ Lucro Recebido</div>'+
+      '<div class="sum-value" style="color:#7dffb0">'+fmt(lucroRecebido)+'</div>'+
+    '</div>'+
+    '<div class="sum-item">'+
+      '<div class="sum-label">📈 Margem</div>'+
+      '<div class="sum-value" style="color:#ffe680">'+pct+'%</div>'+
+    '</div>';
+}
+
+function renderTabela() {
+  const rows = [
+    {nome:'🎴 Pacotinho',      key:'pacote'},
+    {nome:'📚 Álbum Capa Mole',key:'capaMole'},
+    {nome:'📚 C. Dura Normal', key:'capaDuraNormal'},
+    {nome:'📚 C. Dura Prata',  key:'capaDuraPrata'},
+    {nome:'📚 C. Dura Ouro ✨',key:'capaDuraOuro'},
+  ];
+  const tbody = document.getElementById('tabelaPrecos');
+  if (!tbody) return;
+  tbody.innerHTML = rows.map((r,i) => {
+    const venda  = PRECOS[r.key];
+    const custo  = CUSTOS[r.key];
+    const lucro  = venda - custo;
+    const margem = ((lucro/venda)*100).toFixed(1);
+    const bg     = i%2===0?'#fff':'#fafafa';
+    return '<tr style="background:'+bg+';border-bottom:1px solid var(--borda);">'+
+      '<td style="padding:10px 18px;font-weight:500;">'+r.nome+'</td>'+
+      '<td style="padding:10px 14px;text-align:right;font-weight:600;">'+fmt(venda)+'</td>'+
+      '<td style="padding:10px 14px;text-align:right;color:var(--sub);">'+fmt(custo)+'</td>'+
+      '<td style="padding:10px 14px;text-align:right;color:var(--verde-claro);font-weight:700;">+'+fmt(lucro)+'</td>'+
+      '<td style="padding:10px 14px;text-align:right;"><span style="background:#e8fdf2;color:#065f46;padding:3px 8px;border-radius:100px;font-size:0.75rem;font-weight:700;">'+margem+'%</span></td>'+
+    '</tr>';
+  }).join('');
+}
+
+function renderAll(){ renderSummary(); renderGrid(); renderTabela(); }
+carregarDados();
+renderAll();
+</script>
+</body>
+</html>
