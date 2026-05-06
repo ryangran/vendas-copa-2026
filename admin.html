@@ -223,7 +223,10 @@
 <header>
   <div class="header-inner">
     <div class="header-left"><h1>⚽ Vendas Copa</h1><p>Controle de pedidos — Figurinhas & Álbuns</p></div>
-    <div class="copa-badge">2026</div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+      <div class="copa-badge">2026</div>
+      <div id="syncStatus" style="font-size:.65rem;color:rgba(255,255,255,.6);transition:opacity .3s;opacity:0;"></div>
+    </div>
   </div>
 </header>
 <div class="summary-bar" id="summaryBar"></div>
@@ -238,7 +241,7 @@
       <span class="aviso-chevron" id="avisoChevron">▼</span>
     </div>
     <div class="aviso-ctrl-body" id="avisoPanelBody">
-      <button class="aviso-toggle-btn" id="avisoToggleBtn" onclick="togglePedidos()">—</button>
+      <button class="aviso-toggle-btn" id="avisoToggleBtn" onclick="togglePedidosWrapper()">—</button>
       <div class="aviso-field">
         <label>Título da notificação</label>
         <input type="text" class="aviso-input" id="avisoInputTitulo" placeholder="Pedidos Indisponíveis">
@@ -424,6 +427,24 @@
 
 const STORAGE_KEY = 'vendas_copa_2026';
 const AVISO_KEY   = 'copa_aviso_config';
+const API         = '/.netlify/functions/data';
+
+async function cloudGet(key) {
+  try {
+    const r = await fetch(`${API}?key=${key}`);
+    if (!r.ok) return null;
+    const txt = await r.text();
+    return txt === 'null' ? null : JSON.parse(txt);
+  } catch(e) { return null; }
+}
+
+function cloudSet(key, data) {
+  return fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key, data })
+  }).catch(() => {});
+}
 
 const AVISO_DEFAULT = {
   ativo: true,
@@ -435,6 +456,14 @@ const AVISO_DEFAULT = {
 function getAvisoCfg() {
   try { const r = localStorage.getItem(AVISO_KEY); if (r) return { ...AVISO_DEFAULT, ...JSON.parse(r) }; } catch(e) {}
   return { ...AVISO_DEFAULT };
+}
+
+async function syncAvisoFromCloud() {
+  const cloud = await cloudGet('config');
+  if (cloud) {
+    localStorage.setItem(AVISO_KEY, JSON.stringify(cloud));
+    renderAvisoPanel();
+  }
 }
 
 function renderAvisoPanel() {
@@ -471,8 +500,18 @@ function salvarAvisoConfig() {
   cfg.mensagem = document.getElementById('avisoInputMsg').value.trim()    || AVISO_DEFAULT.mensagem;
   cfg.rodape   = document.getElementById('avisoInputRodape').value.trim() || AVISO_DEFAULT.rodape;
   localStorage.setItem(AVISO_KEY, JSON.stringify(cfg));
+  cloudSet('config', cfg);
   renderAvisoPanel();
   showToast('✅ Notificação salva!');
+}
+
+function togglePedidosWrapper() {
+  const cfg = getAvisoCfg();
+  cfg.ativo = !cfg.ativo;
+  localStorage.setItem(AVISO_KEY, JSON.stringify(cfg));
+  cloudSet('config', cfg);
+  renderAvisoPanel();
+  showToast(cfg.ativo ? '🔴 Pedidos fechados!' : '🟢 Pedidos abertos!');
 }
 const PIX_CHAVE = '61.986.179/0001-92';
 const PIX_NOME = 'Ryan Granchelli';
@@ -523,23 +562,59 @@ function resumoPedido(c) {
 /* ---- ESTADO ---- */
 let estado = [], nextId = 0, filtroAtual = 'todos', deleteId = null;
 
-function carregarDados() {
+function setSyncStatus(msg) {
+  let el = document.getElementById('syncStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.opacity = msg ? '1' : '0';
+}
+
+function applyData(d) {
+  estado = (d.clientes || []).map(c => ({ tel:'', ...c, total: c.total || calcTotal(c) }));
+  nextId = d.nextId || estado.length;
+}
+
+async function carregarDados() {
+  // 1. Render local immediately
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const d = JSON.parse(raw);
-      estado = (d.clientes || []).map(c => ({ tel:'', ...c, total: calcTotal(c) }));
-      nextId = d.nextId || estado.length;
-      return;
-    }
+    if (raw) { applyData(JSON.parse(raw)); renderAll(); }
   } catch(e) {}
-  estado = CLIENTES_INICIAIS.map((c,i) => ({...c,id:i,pago:false,entrega:'pendente',total:calcTotal(c)}));
-  nextId = estado.length;
-  salvarDados();
+
+  // 2. Sync from cloud
+  setSyncStatus('🔄 Sincronizando...');
+  const cloud = await cloudGet('orders');
+
+  if (cloud && cloud.clientes !== undefined) {
+    const localNextId = estado.length ? nextId : 0;
+    // Use cloud if it's newer or we had nothing local
+    if (cloud.nextId >= localNextId) {
+      applyData(cloud);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cloud));
+      renderAll();
+    } else {
+      // Local is newer — push it to cloud
+      await cloudSet('orders', { clientes: estado, nextId });
+    }
+  } else if (!localStorage.getItem(STORAGE_KEY)) {
+    // Brand new — seed with initial clients
+    estado = CLIENTES_INICIAIS.map((c,i) => ({...c,id:i,pago:false,entrega:'pendente',total:calcTotal(c)}));
+    nextId = estado.length;
+    salvarDados();
+    renderAll();
+  } else {
+    // Cloud unavailable — migrate local to cloud silently
+    cloudSet('orders', { clientes: estado, nextId });
+  }
+
+  setSyncStatus('');
 }
+
 function salvarDados() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({clientes:estado, nextId})); }
+  const payload = { clientes: estado, nextId };
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(payload)); }
   catch(e) { showToast('⚠️ Erro ao salvar!'); }
+  cloudSet('orders', payload);
 }
 
 /* ---- FILTRO ---- */
@@ -883,6 +958,7 @@ function renderTabela() {
 function renderAll(){ renderSummary(); renderGrid(); renderTabela(); }
 carregarDados();
 renderAvisoPanel();
+syncAvisoFromCloud();
 renderAll();
 </script>
 </body>

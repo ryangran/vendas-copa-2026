@@ -422,6 +422,24 @@ footer{text-align:center;padding:18px 16px;font-size:.72rem;color:#888;backgroun
 // ── CONFIGURAÇÃO ──────────────────────────────────────────────────
 // Substitua pelo número de WhatsApp da loja (DDI + DDD + número, só números):
 const WPP_LOJA = '5511944804280';
+const API      = '/.netlify/functions/data';
+
+async function cloudGet(key) {
+  try {
+    const r = await fetch(`${API}?key=${key}`);
+    if (!r.ok) return null;
+    const txt = await r.text();
+    return txt === 'null' ? null : JSON.parse(txt);
+  } catch(e) { return null; }
+}
+
+function cloudSet(key, data) {
+  return fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key, data })
+  }).catch(() => {});
+}
 
 const PRODS = [
   { id:'pacote',         nome:'Figurinha Pacote',        emoji:'🎴', preco:5.90,  destaque:true  },
@@ -639,17 +657,18 @@ async function enviarPedido() {
   document.getElementById('btnWpp').href = wppLink;
   document.getElementById('sucTotalVal').textContent = fmt(total);
 
-  salvarNaAdmin(total);
+  await salvarNaAdmin(total);
 
   btn.disabled = false;
   txt.innerHTML = '⚽ ENVIAR PEDIDO';
   document.getElementById('sucesso').classList.add('show');
 }
 
-function salvarNaAdmin(total) {
+async function salvarNaAdmin(total) {
   try {
-    const raw = localStorage.getItem('vendas_copa_2026');
-    let d = raw ? JSON.parse(raw) : { clientes: [], nextId: 0 };
+    // Busca estado atual do cloud primeiro
+    const cloud = await cloudGet('orders');
+    let d = cloud || { clientes: [], nextId: 0 };
 
     const bairro   = document.getElementById('f-bairro').value.trim();
     const endereco = document.getElementById('f-end').value.trim();
@@ -679,6 +698,8 @@ function salvarNaAdmin(total) {
       ts:      Date.now(),
     });
     d.nextId = d.nextId + 1;
+    // Salva no cloud (fonte de verdade) e localStorage (cache)
+    await cloudSet('orders', d);
     localStorage.setItem('vendas_copa_2026', JSON.stringify(d));
   } catch(e) { /* silent */ }
 }
@@ -720,17 +741,27 @@ function getAvisoConfig() {
   return { ...AVISO_DEFAULT };
 }
 
-function initAviso() {
-  const cfg = getAvisoConfig();
-  if (!cfg.ativo) return;
+function applyAviso(cfg) {
+  document.getElementById('avisoTitulo').innerHTML    = cfg.titulo.replace(/\n/g, '<br>');
+  document.getElementById('avisoMsg').innerHTML       = cfg.mensagem.replace(/\n/g, '<br>');
+  document.getElementById('avisoRodape').textContent  = cfg.rodape;
+  const ativo = cfg.ativo;
+  document.getElementById('avisoLoteOv').style.display   = ativo ? 'flex' : 'none';
+  document.getElementById('btnEnviar').disabled          = ativo;
+  document.getElementById('lockMsg').style.display       = ativo ? 'block' : 'none';
+}
 
-  document.getElementById('avisoTitulo').innerHTML = cfg.titulo.replace(/\n/g, '<br>');
-  document.getElementById('avisoMsg').innerHTML    = cfg.mensagem.replace(/\n/g, '<br>');
-  document.getElementById('avisoRodape').textContent = cfg.rodape;
-  document.getElementById('avisoLoteOv').style.display = 'flex';
+async function initAviso() {
+  // Aplica localStorage instantaneamente
+  applyAviso(getAvisoConfig());
 
-  document.getElementById('btnEnviar').disabled = true;
-  document.getElementById('lockMsg').style.display = 'block';
+  // Depois busca do cloud (fonte de verdade)
+  const cloud = await cloudGet('config');
+  if (cloud) {
+    const cfg = { ...AVISO_DEFAULT, ...cloud };
+    localStorage.setItem(AVISO_KEY, JSON.stringify(cfg));
+    applyAviso(cfg);
+  }
 }
 
 function fecharAvisoLote() {
