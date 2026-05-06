@@ -63,6 +63,30 @@
   .card { background:var(--card); border:1.5px solid var(--borda); border-radius:12px; overflow:hidden; transition:transform .15s,box-shadow .15s; }
   .card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.09); }
   .card.pago { border-color:var(--verde-claro); background:#f0fff6; }
+  /* ── AVISO CONTROL ── */
+  .aviso-ctrl{background:#1a1a2e;border-radius:12px;margin-bottom:20px;overflow:hidden;}
+  .aviso-ctrl-header{display:flex;align-items:center;gap:10px;padding:13px 18px;cursor:pointer;user-select:none;}
+  .aviso-ctrl-title{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:#fff;flex:1;}
+  .aviso-status{font-size:.65rem;font-weight:700;letter-spacing:1px;padding:3px 10px;border-radius:100px;text-transform:uppercase;}
+  .aviso-status.fechado{background:#c00;color:#fff;}
+  .aviso-status.aberto{background:#00a651;color:#fff;}
+  .aviso-chevron{color:rgba(255,255,255,.4);font-size:.8rem;transition:transform .2s;}
+  .aviso-chevron.open{transform:rotate(180deg);}
+  .aviso-ctrl-body{padding:0 18px 18px;display:none;}
+  .aviso-ctrl-body.open{display:block;}
+  .aviso-toggle-btn{width:100%;padding:12px;border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;cursor:pointer;margin-bottom:14px;transition:all .15s;}
+  .aviso-toggle-btn.fechar{background:#c00;color:#fff;}
+  .aviso-toggle-btn.abrir{background:#00a651;color:#fff;}
+  .aviso-toggle-btn:hover{opacity:.88;}
+  .aviso-field{margin-bottom:12px;}
+  .aviso-field label{display:block;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.5);margin-bottom:5px;}
+  .aviso-input{width:100%;padding:9px 12px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.85rem;color:#fff;outline:none;transition:border-color .15s;}
+  .aviso-input:focus{border-color:rgba(255,255,255,.4);}
+  .aviso-textarea{resize:vertical;min-height:80px;}
+  .aviso-save-btn{width:100%;padding:10px;background:var(--amarelo);color:var(--verde);border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;cursor:pointer;transition:all .15s;}
+  .aviso-save-btn:hover{background:var(--amarelo-escuro);}
+  .aviso-hint{font-size:.68rem;color:rgba(255,255,255,.35);margin-top:10px;text-align:center;}
+
   .card.online { border-top: 3px solid #0066cc; }
   .online-tag { display:inline-flex;align-items:center;gap:3px;font-size:.6rem;font-weight:700;background:#dbeafe;color:#1d4ed8;border-radius:100px;padding:2px 8px;letter-spacing:.5px;vertical-align:middle;margin-left:5px; }
   .obs-linha { font-size:.74rem;color:#555;background:#fafafa;border-top:1px dashed var(--borda);padding:7px 17px;font-style:italic; }
@@ -205,6 +229,33 @@
 <div class="summary-bar" id="summaryBar"></div>
 
 <main>
+  <!-- ── PAINEL NOTIFICAÇÃO ── -->
+  <div class="aviso-ctrl" id="avisoCtrl">
+    <div class="aviso-ctrl-header" onclick="toggleAvisoPanel()">
+      <span style="font-size:1rem;">🔔</span>
+      <span class="aviso-ctrl-title">Notificação & Pedidos</span>
+      <span class="aviso-status" id="avisoStatusBadge">—</span>
+      <span class="aviso-chevron" id="avisoChevron">▼</span>
+    </div>
+    <div class="aviso-ctrl-body" id="avisoPanelBody">
+      <button class="aviso-toggle-btn" id="avisoToggleBtn" onclick="togglePedidos()">—</button>
+      <div class="aviso-field">
+        <label>Título da notificação</label>
+        <input type="text" class="aviso-input" id="avisoInputTitulo" placeholder="Pedidos Indisponíveis">
+      </div>
+      <div class="aviso-field">
+        <label>Mensagem (use Enter para quebra de linha)</label>
+        <textarea class="aviso-input aviso-textarea" id="avisoInputMsg" placeholder="Texto da mensagem..."></textarea>
+      </div>
+      <div class="aviso-field">
+        <label>Rodapé (linha pequena abaixo)</label>
+        <input type="text" class="aviso-input" id="avisoInputRodape" placeholder="Acompanhe o grupo...">
+      </div>
+      <button class="aviso-save-btn" onclick="salvarAvisoConfig()">💾 SALVAR NOTIFICAÇÃO</button>
+      <p class="aviso-hint">As alterações aparecem imediatamente para quem abrir o site.</p>
+    </div>
+  </div>
+
   <div class="toolbar">
     <span class="filters-label">Filtrar:</span>
     <button class="filter-btn active" data-filtro="todos" onclick="filtrar(this)">Todos</button>
@@ -372,6 +423,57 @@
 })();
 
 const STORAGE_KEY = 'vendas_copa_2026';
+const AVISO_KEY   = 'copa_aviso_config';
+
+const AVISO_DEFAULT = {
+  ativo: true,
+  titulo: 'Pedidos\nIndisponíveis',
+  mensagem: 'No momento não estamos aceitando novos pedidos.\n\nEm breve abriremos o 3º lote de pedidos — fique ligado!',
+  rodape: 'Acompanhe o grupo para saber quando abrir.'
+};
+
+function getAvisoCfg() {
+  try { const r = localStorage.getItem(AVISO_KEY); if (r) return { ...AVISO_DEFAULT, ...JSON.parse(r) }; } catch(e) {}
+  return { ...AVISO_DEFAULT };
+}
+
+function renderAvisoPanel() {
+  const cfg = getAvisoCfg();
+  const badge  = document.getElementById('avisoStatusBadge');
+  const btn    = document.getElementById('avisoToggleBtn');
+  badge.textContent = cfg.ativo ? '🔴 FECHADO' : '🟢 ABERTO';
+  badge.className   = 'aviso-status ' + (cfg.ativo ? 'fechado' : 'aberto');
+  btn.textContent   = cfg.ativo ? '🟢 ABRIR PEDIDOS (remover notificação)' : '🔴 FECHAR PEDIDOS (ativar notificação)';
+  btn.className     = 'aviso-toggle-btn ' + (cfg.ativo ? 'abrir' : 'fechar');
+  document.getElementById('avisoInputTitulo').value  = cfg.titulo;
+  document.getElementById('avisoInputMsg').value     = cfg.mensagem;
+  document.getElementById('avisoInputRodape').value  = cfg.rodape;
+}
+
+function toggleAvisoPanel() {
+  const body    = document.getElementById('avisoPanelBody');
+  const chevron = document.getElementById('avisoChevron');
+  const open    = body.classList.toggle('open');
+  chevron.classList.toggle('open', open);
+}
+
+function togglePedidos() {
+  const cfg  = getAvisoCfg();
+  cfg.ativo  = !cfg.ativo;
+  localStorage.setItem(AVISO_KEY, JSON.stringify(cfg));
+  renderAvisoPanel();
+  showToast(cfg.ativo ? '🔴 Pedidos fechados!' : '🟢 Pedidos abertos!');
+}
+
+function salvarAvisoConfig() {
+  const cfg = getAvisoCfg();
+  cfg.titulo   = document.getElementById('avisoInputTitulo').value.trim() || AVISO_DEFAULT.titulo;
+  cfg.mensagem = document.getElementById('avisoInputMsg').value.trim()    || AVISO_DEFAULT.mensagem;
+  cfg.rodape   = document.getElementById('avisoInputRodape').value.trim() || AVISO_DEFAULT.rodape;
+  localStorage.setItem(AVISO_KEY, JSON.stringify(cfg));
+  renderAvisoPanel();
+  showToast('✅ Notificação salva!');
+}
 const PIX_CHAVE = '61.986.179/0001-92';
 const PIX_NOME = 'Ryan Granchelli';
 
@@ -780,6 +882,7 @@ function renderTabela() {
 
 function renderAll(){ renderSummary(); renderGrid(); renderTabela(); }
 carregarDados();
+renderAvisoPanel();
 renderAll();
 </script>
 </body>
