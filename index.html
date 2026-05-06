@@ -6,6 +6,24 @@
 <title>Vendas Copa 2026</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
+  /* ── LOGIN ── */
+  .login-ov{position:fixed;inset:0;background:linear-gradient(160deg,#001a00,#004d00);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .login-box{background:#fff;border-radius:20px;padding:38px 30px 32px;width:100%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);}
+  .login-ball{font-size:2.8rem;margin-bottom:8px;display:block;animation:lb 3s ease-in-out infinite;}
+  @keyframes lb{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .login-ttl{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;color:#006400;letter-spacing:2px;margin-bottom:3px;}
+  .login-sub{font-size:.77rem;color:#999;margin-bottom:26px;}
+  .login-fg{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;text-align:left;}
+  .login-lbl{font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#666;}
+  .login-inp{padding:11px 13px;border:2px solid #e0e0e0;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;transition:border-color .15s;width:100%;}
+  .login-inp:focus{border-color:#006400;}
+  .login-inp.err{border-color:#c00!important;}
+  .login-btn{width:100%;padding:13px;background:#006400;color:#fff;border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer;transition:background .15s;margin-top:4px;}
+  .login-btn:hover{background:#004d00;}
+  .login-err{color:#c00;font-size:.77rem;margin-top:10px;display:none;}
+  .logout-btn{position:fixed;bottom:18px;right:18px;z-index:100;background:rgba(0,0,0,.45);color:#fff;border:none;padding:7px 14px;border-radius:100px;font-size:.71rem;cursor:pointer;font-family:'DM Sans',sans-serif;display:none;transition:background .15s;}
+  .logout-btn:hover{background:rgba(0,0,0,.65);}
+
   :root {
     --verde: #006400; --verde-claro: #00a651; --amarelo: #f5c518;
     --amarelo-escuro: #c9a000; --azul: #003087; --bg: #f7f4ef;
@@ -155,6 +173,26 @@
 </head>
 <body>
 
+<!-- ── LOGIN OVERLAY ──────────────────────────── -->
+<div class="login-ov" id="loginOv">
+  <div class="login-box">
+    <span class="login-ball">⚽</span>
+    <div class="login-ttl">Painel Admin</div>
+    <div class="login-sub">Vendas Copa 2026 · Acesso restrito</div>
+    <div class="login-fg">
+      <label class="login-lbl">Usuário</label>
+      <input type="text" id="lUser" class="login-inp" placeholder="Usuário" autocomplete="username">
+    </div>
+    <div class="login-fg">
+      <label class="login-lbl">Senha</label>
+      <input type="password" id="lPass" class="login-inp" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">ENTRAR</button>
+    <div class="login-err" id="lErr">Usuário ou senha incorretos.</div>
+  </div>
+</div>
+<button class="logout-btn" id="logoutBtn" onclick="doLogout()">🔒 Sair</button>
+
 <header>
   <div class="header-inner">
     <div class="header-left"><h1>⚽ Vendas Copa</h1><p>Controle de pedidos — Figurinhas & Álbuns</p></div>
@@ -292,6 +330,44 @@
 </div>
 
 <script>
+// ── AUTH ─────────────────────────────────────────────────────────
+(function(){
+  const U='Ryanzinkkj', P='160206Ryan#', K='copa_adm_v1';
+  function chk(){
+    if(sessionStorage.getItem(K)==='ok'){
+      document.getElementById('loginOv').style.display='none';
+      document.getElementById('logoutBtn').style.display='block';
+    }
+  }
+  window.doLogin=function(){
+    const u=document.getElementById('lUser').value;
+    const p=document.getElementById('lPass').value;
+    const err=document.getElementById('lErr');
+    const ui=document.getElementById('lUser');
+    const pi=document.getElementById('lPass');
+    if(u===U&&p===P){
+      sessionStorage.setItem(K,'ok');
+      document.getElementById('loginOv').style.display='none';
+      document.getElementById('logoutBtn').style.display='block';
+      err.style.display='none';
+      ui.classList.remove('err'); pi.classList.remove('err');
+    } else {
+      err.style.display='block';
+      ui.classList.add('err'); pi.classList.add('err');
+      pi.value='';
+      setTimeout(()=>{ui.classList.remove('err');pi.classList.remove('err');},2000);
+    }
+  };
+  window.doLogout=function(){
+    sessionStorage.removeItem(K);
+    document.getElementById('loginOv').style.display='flex';
+    document.getElementById('logoutBtn').style.display='none';
+    document.getElementById('lUser').value='';
+    document.getElementById('lPass').value='';
+  };
+  chk();
+})();
+
 const STORAGE_KEY = 'vendas_copa_2026';
 const PIX_CHAVE = '61.986.179/0001-92';
 const PIX_NOME = 'Ryan Granchelli';

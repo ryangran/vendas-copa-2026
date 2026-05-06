@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Monte seu Pedido ⚽ Copa 2026</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --verde:#006400; --verde-claro:#00a651; --verde-esc:#003d00;
+  --amarelo:#f5c518; --dourado:#c9a000;
+  --azul:#003087; --azul-claro:#0052cc;
+  --vermelho:#c8102e;
+  --bg:#eef5ee; --card:#fff; --texto:#1a1a1a; --sub:#555;
+  --borda:#cde3cd; --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--texto);min-height:100vh}
+
+/* ── HERO ── */
+.hero{
+  background:linear-gradient(160deg,#001a00 0%,#004d00 45%,#006820 100%);
+  position:relative;overflow:hidden;padding:32px 20px 40px;text-align:center;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse at 20% 50%,rgba(245,197,24,.08) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 20%,rgba(0,166,81,.12) 0%,transparent 50%),
+    repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(255,255,255,.015) 40px,rgba(255,255,255,.015) 41px);
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--amarelo);color:var(--verde-esc);
+  font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:2px;
+  padding:5px 14px;border-radius:100px;margin-bottom:16px;position:relative;z-index:1;
+}
+.hero-ball{font-size:3.2rem;display:block;animation:floatBall 3s ease-in-out infinite;margin-bottom:12px;position:relative;z-index:1;}
+@keyframes floatBall{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-10px) rotate(20deg)}}
+.hero h1{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(2.1rem,7.5vw,3.2rem);
+  color:var(--amarelo);letter-spacing:3px;line-height:1.05;
+  position:relative;z-index:1;
+  text-shadow:0 2px 20px rgba(0,0,0,.4);
+}
+.hero p{
+  color:rgba(255,255,255,.78);font-size:.88rem;
+  margin-top:10px;max-width:360px;margin-inline:auto;
+  position:relative;z-index:1;line-height:1.55;
+}
+.hero-flags{font-size:1.5rem;margin-top:14px;letter-spacing:6px;position:relative;z-index:1;}
+.hero-dec{
+  position:absolute;font-size:5rem;opacity:.05;pointer-events:none;
+  bottom:-10px;right:-10px;transform:rotate(15deg);
+}
+
+/* ── AVISO ITU ── */
+.aviso-itu{
+  background:linear-gradient(90deg,#002266,#003399);
+  color:#fff;text-align:center;padding:11px 16px;
+  font-size:.82rem;font-weight:600;letter-spacing:.3px;
+  display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+}
+.aviso-itu .tag{
+  background:var(--amarelo);color:var(--azul);
+  border-radius:5px;padding:2px 10px;font-size:.75rem;font-weight:700;letter-spacing:1px;
+}
+
+/* ── MAIN ── */
+main{max-width:600px;margin:0 auto;padding:22px 16px 130px;}
+
+/* ── SEC TITLE ── */
+.sec-title{
+  display:flex;align-items:center;gap:10px;
+  font-family:'Bebas Neue',sans-serif;font-size:1.25rem;
+  color:var(--verde);letter-spacing:2px;margin-bottom:14px;margin-top:4px;
+}
+.sec-title::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,var(--verde-claro),transparent);border-radius:2px;}
+
+/* ── PRODUCTS ── */
+.produtos-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:28px;}
+
+.prod-card{
+  background:var(--card);border:2px solid var(--borda);
+  border-radius:var(--radius);padding:15px 10px 13px;
+  text-align:center;transition:all .2s;position:relative;
+  box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+.prod-card.selected{
+  border-color:var(--verde-claro);background:linear-gradient(135deg,#f0fff6,#e8fdf0);
+  box-shadow:0 6px 20px rgba(0,166,81,.18);transform:translateY(-2px);
+}
+.prod-card.destaque{grid-column:span 2;}
+
+.prod-qty-badge{
+  position:absolute;top:-7px;right:-7px;
+  background:var(--verde);color:#fff;
+  font-size:.65rem;font-weight:700;
+  min-width:22px;height:22px;border-radius:11px;
+  display:none;align-items:center;justify-content:center;
+  padding:0 5px;box-shadow:0 2px 6px rgba(0,0,0,.2);
+}
+.prod-card.selected .prod-qty-badge{display:flex;}
+
+.prod-emoji{font-size:2.2rem;display:block;margin-bottom:5px;}
+.prod-nome{font-size:.77rem;font-weight:600;color:var(--texto);line-height:1.3;margin-bottom:5px;min-height:32px;display:flex;align-items:center;justify-content:center;}
+.prod-preco{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:var(--verde);letter-spacing:1px;margin-bottom:11px;}
+.prod-card.selected .prod-preco{color:var(--verde-claro);}
+
+.qty-ctrl{display:flex;align-items:center;justify-content:center;gap:9px;}
+.qty-btn{
+  width:32px;height:32px;border-radius:50%;
+  border:2px solid var(--borda);background:#fff;
+  font-size:1.15rem;font-weight:700;color:var(--verde);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .12s;flex-shrink:0;
+}
+.qty-btn:active{transform:scale(.88);}
+.prod-card.selected .qty-btn{border-color:var(--verde-claro);}
+.qty-btn:hover{background:var(--verde);color:#fff;border-color:var(--verde);}
+.qty-num{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;min-width:26px;text-align:center;}
+
+/* ── RESUMO ── */
+.resumo-box{
+  background:var(--card);border:2px solid var(--borda);
+  border-radius:var(--radius);overflow:hidden;margin-bottom:28px;
+  box-shadow:0 2px 12px rgba(0,0,0,.06);
+}
+.resumo-item{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding:11px 16px;border-bottom:1px dashed var(--borda);gap:10px;
+}
+.resumo-item:last-child{border-bottom:none;}
+.ri-nome{font-size:.83rem;font-weight:600;color:var(--texto);}
+.ri-qtd{font-size:.72rem;color:var(--sub);margin-top:2px;}
+.ri-sub{font-size:.9rem;font-weight:700;color:var(--verde);white-space:nowrap;}
+.resumo-vazio{padding:22px;text-align:center;color:#bbb;font-size:.85rem;font-style:italic;}
+
+.total-row{
+  background:linear-gradient(135deg,var(--verde-esc),#004d00);
+  color:#fff;padding:15px 18px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.total-row-label{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;opacity:.75;}
+.total-row-val{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--amarelo);letter-spacing:1px;}
+
+/* ── FORM ── */
+.form-grid{display:grid;gap:13px;}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.fgroup{display:flex;flex-direction:column;gap:5px;}
+.flabel{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--sub);}
+.finput,.ftextarea{
+  padding:11px 13px;border:2px solid var(--borda);
+  border-radius:10px;font-family:'DM Sans',sans-serif;
+  font-size:.9rem;outline:none;transition:border-color .15s,box-shadow .15s;
+  background:#fff;color:var(--texto);width:100%;
+}
+.finput:focus,.ftextarea:focus{border-color:var(--verde-claro);box-shadow:0 0 0 3px rgba(0,166,81,.12);}
+.finput.locked{background:#f3f7f3;color:var(--sub);cursor:not-allowed;}
+.finput.erro{border-color:var(--vermelho)!important;box-shadow:0 0 0 3px rgba(200,16,46,.1);}
+.ftextarea{resize:vertical;min-height:82px;}
+.fhint{font-size:.69rem;color:#999;margin-top:2px;}
+
+/* ── ERRO BOX ── */
+.erro-box{
+  background:#fff0f0;border:2px solid #ffc0c0;border-radius:10px;
+  padding:13px 16px;margin-bottom:16px;font-size:.84rem;color:#b00;
+  display:none;line-height:1.65;border-left:4px solid var(--vermelho);
+}
+.erro-box.show{display:block;}
+
+/* ── BTN ENVIAR ── */
+.btn-enviar{
+  width:100%;padding:17px;
+  background:linear-gradient(135deg,#006400,#004d00);
+  color:#fff;border:none;border-radius:14px;
+  font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:3px;
+  cursor:pointer;transition:all .15s;
+  margin-top:22px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 6px 24px rgba(0,100,0,.35);
+}
+.btn-enviar:hover{background:linear-gradient(135deg,#004d00,#003200);box-shadow:0 8px 28px rgba(0,100,0,.45);}
+.btn-enviar:active{transform:scale(.98);}
+.btn-enviar:disabled{background:#aaa;box-shadow:none;cursor:not-allowed;}
+
+/* ── TOTAL STICKY (mobile) ── */
+.total-sticky{
+  position:fixed;bottom:0;left:0;right:0;
+  background:linear-gradient(135deg,#003d00,#006400);
+  padding:12px 20px;display:flex;justify-content:space-between;align-items:center;
+  z-index:100;box-shadow:0 -4px 20px rgba(0,0,0,.2);
+}
+.total-sticky-label{color:rgba(255,255,255,.7);font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;}
+.total-sticky-val{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--amarelo);letter-spacing:1px;}
+@media(min-width:601px){.total-sticky{display:none;}}
+
+/* ── SUCCESS ── */
+.sucesso-overlay{
+  display:none;position:fixed;inset:0;
+  background:linear-gradient(160deg,#001a00,#003d00);
+  z-index:9999;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px;text-align:center;
+}
+.sucesso-overlay.show{display:flex;}
+.suc-icon{font-size:4.5rem;margin-bottom:14px;animation:popIn .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{transform:scale(0) rotate(-20deg)}to{transform:scale(1) rotate(0deg)}}
+.suc-title{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;color:var(--amarelo);letter-spacing:3px;margin-bottom:10px;}
+.suc-msg{color:rgba(255,255,255,.8);font-size:.92rem;line-height:1.65;margin-bottom:28px;max-width:340px;}
+.suc-total{
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+  border-radius:12px;padding:12px 24px;margin-bottom:24px;
+}
+.suc-total-label{font-size:.7rem;color:rgba(255,255,255,.6);font-weight:600;text-transform:uppercase;letter-spacing:1px;}
+.suc-total-val{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--amarelo);}
+.btn-wpp{
+  display:flex;align-items:center;gap:9px;
+  background:#25D366;color:#fff;border:none;
+  padding:15px 30px;border-radius:100px;
+  font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;
+  cursor:pointer;text-decoration:none;margin-bottom:12px;
+  box-shadow:0 6px 20px rgba(37,211,102,.4);transition:all .15s;
+}
+.btn-wpp:hover{background:#1da851;transform:translateY(-1px);}
+.btn-novo{
+  background:transparent;color:rgba(255,255,255,.55);
+  border:1px solid rgba(255,255,255,.2);padding:10px 24px;
+  border-radius:100px;font-family:'DM Sans',sans-serif;
+  font-size:.85rem;cursor:pointer;transition:all .15s;
+}
+.btn-novo:hover{border-color:rgba(255,255,255,.4);color:rgba(255,255,255,.8);}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:72px;left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:#1a1a1a;color:#fff;
+  padding:11px 22px;border-radius:100px;
+  font-size:.84rem;font-weight:500;
+  z-index:9998;transition:transform .3s;pointer-events:none;white-space:nowrap;
+  max-width:90vw;overflow:hidden;text-overflow:ellipsis;
+}
+.toast.show{transform:translateX(-50%) translateY(0);}
+@media(min-width:601px){.toast{bottom:24px;}}
+
+/* ── SPINNER ── */
+.spinner{display:inline-block;width:20px;height:20px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── FOOTER ── */
+footer{text-align:center;padding:18px 16px;font-size:.72rem;color:#888;background:#fff;border-top:1px solid var(--borda);}
+
+@media(max-width:420px){
+  .prod-nome{font-size:.72rem;}
+  .hero h1{font-size:1.9rem;}
+  .form-row-2{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- Netlify Forms detection (hidden) -->
+<form name="pedido-copa" netlify netlify-honeypot="bot-field" hidden>
+  <input name="form-name"><input name="bot-field">
+  <input name="nome"><input name="whatsapp">
+  <input name="cep"><input name="endereco"><input name="complemento">
+  <input name="bairro"><input name="cidade"><input name="estado">
+  <textarea name="observacoes"></textarea>
+  <textarea name="resumo-pedido"></textarea>
+  <input name="total">
+</form>
+
+<!-- ── HERO ─────────────────────────────────────────── -->
+<header class="hero">
+  <div class="hero-ball">⚽</div>
+  <div class="hero-badge">🏆 Copa do Mundo 2026</div>
+  <h1>Monte seu pedido<br>Copa 2026</h1>
+  <p>Escolha seus álbuns e pacotes de figurinhas e envie seu pedido de forma rápida.</p>
+  <div class="hero-flags">🇧🇷 🇺🇸 🇨🇦 🇲🇽</div>
+  <span class="hero-dec">🏟️</span>
+</header>
+
+<div class="aviso-itu">
+  🏙️ Atendimento disponível somente para <span class="tag">Itu / SP</span>
+</div>
+
+<!-- ── MAIN ─────────────────────────────────────────── -->
+<main>
+
+  <!-- PRODUTOS -->
+  <div class="sec-title">🎴 Produtos</div>
+  <div class="produtos-grid" id="prodGrid"></div>
+
+  <!-- RESUMO -->
+  <div class="sec-title">🧾 Resumo do pedido</div>
+  <div class="resumo-box">
+    <div id="resumoLista"><div class="resumo-vazio">Nenhum produto selecionado ainda.</div></div>
+    <div class="total-row">
+      <span class="total-row-label">Total do pedido</span>
+      <span class="total-row-val" id="totalVal">R$ 0,00</span>
+    </div>
+  </div>
+
+  <!-- DADOS -->
+  <div class="sec-title">📋 Seus dados</div>
+  <div id="erroBox" class="erro-box"></div>
+
+  <div class="form-grid">
+
+    <div class="fgroup">
+      <label class="flabel">Nome completo *</label>
+      <input type="text" id="f-nome" class="finput" placeholder="Seu nome completo" autocomplete="name">
+    </div>
+
+    <div class="fgroup">
+      <label class="flabel">WhatsApp *</label>
+      <input type="tel" id="f-tel" class="finput" placeholder="(11) 99999-9999" maxlength="15" oninput="maskFone(this)" autocomplete="tel">
+    </div>
+
+    <div class="fgroup">
+      <label class="flabel">CEP *</label>
+      <input type="text" id="f-cep" class="finput" placeholder="00000-000" maxlength="9" oninput="maskCEP(this)" onblur="lookupCEP()">
+      <span class="fhint">Digite o CEP para preencher o endereço automaticamente</span>
+    </div>
+
+    <div class="fgroup">
+      <label class="flabel">Endereço (rua e número) *</label>
+      <input type="text" id="f-end" class="finput" placeholder="Rua Exemplo, 123" autocomplete="address-line1">
+    </div>
+
+    <div class="form-row-2">
+      <div class="fgroup">
+        <label class="flabel">Bairro *</label>
+        <input type="text" id="f-bairro" class="finput" placeholder="Seu bairro">
+      </div>
+      <div class="fgroup">
+        <label class="flabel">Complemento</label>
+        <input type="text" id="f-comp" class="finput" placeholder="Apto, casa...">
+      </div>
+    </div>
+
+    <div class="form-row-2">
+      <div class="fgroup">
+        <label class="flabel">Cidade</label>
+        <input type="text" id="f-cidade" class="finput locked" value="Itu" disabled>
+      </div>
+      <div class="fgroup">
+        <label class="flabel">Estado</label>
+        <input type="text" id="f-estado" class="finput locked" value="SP" disabled>
+      </div>
+    </div>
+
+    <div class="fgroup">
+      <label class="flabel">Observações do pedido</label>
+      <textarea id="f-obs" class="ftextarea" placeholder="Horário preferido, ponto de referência, forma de pagamento preferida..."></textarea>
+    </div>
+
+  </div>
+
+  <button class="btn-enviar" id="btnEnviar" onclick="enviarPedido()">
+    <span id="btnTxt">⚽ ENVIAR PEDIDO</span>
+  </button>
+
+</main>
+
+<footer>🏆 Vendas Copa 2026 · Itu/SP · Atendimento exclusivo para Itu/SP</footer>
+
+<!-- ── TOTAL STICKY (mobile) ────────────────────────── -->
+<div class="total-sticky">
+  <div>
+    <div class="total-sticky-label">Total do pedido</div>
+    <div class="total-sticky-val" id="totalSticky">R$ 0,00</div>
+  </div>
+  <span style="font-size:1.8rem;">⚽</span>
+</div>
+
+<!-- ── SUCCESS ──────────────────────────────────────── -->
+<div class="sucesso-overlay" id="sucesso">
+  <div class="suc-icon">🏆</div>
+  <div class="suc-title">Pedido enviado!</div>
+  <div class="suc-msg">
+    Recebemos seu pedido com sucesso!<br>
+    Em breve entraremos em contato pelo WhatsApp para confirmar e combinar a entrega.
+  </div>
+  <div class="suc-total">
+    <div class="suc-total-label">Valor do pedido</div>
+    <div class="suc-total-val" id="sucTotalVal">—</div>
+  </div>
+  <a id="btnWpp" href="#" class="btn-wpp" target="_blank" rel="noopener">
+    💬 Confirmar pelo WhatsApp
+  </a>
+  <button class="btn-novo" onclick="novoPedido()">Fazer novo pedido</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIGURAÇÃO ──────────────────────────────────────────────────
+// Substitua pelo número de WhatsApp da loja (DDI + DDD + número, só números):
+const WPP_LOJA = '5511999999999';
+
+const PRODS = [
+  { id:'pacote',         nome:'Figurinha Pacote',        emoji:'🎴', preco:5.90,  destaque:true  },
+  { id:'capaDuraOuro',   nome:'Álbum Capa Dura Ouro ✨',  emoji:'🥇', preco:67.92, destaque:false },
+  { id:'capaDuraPrata',  nome:'Álbum Capa Dura Prata',    emoji:'🥈', preco:66.92, destaque:false },
+  { id:'capaDuraNormal', nome:'Álbum Capa Dura Normal',   emoji:'📚', preco:62.62, destaque:false },
+  { id:'capaMole',       nome:'Álbum Capa Mole',          emoji:'📗', preco:21.92, destaque:false },
+];
+
+const qtys = {};
+PRODS.forEach(p => qtys[p.id] = 0);
+
+const fmt = n => n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+
+// ── RENDER PRODUTOS ───────────────────────────────────────────────
+function renderProdutos() {
+  document.getElementById('prodGrid').innerHTML = PRODS.map(p => `
+    <div class="prod-card${p.destaque?' destaque':''}${qtys[p.id]>0?' selected':''}" id="card-${p.id}">
+      <div class="prod-qty-badge" id="badge-${p.id}">${qtys[p.id]}</div>
+      <span class="prod-emoji">${p.emoji}</span>
+      <div class="prod-nome">${p.nome}</div>
+      <div class="prod-preco">${fmt(p.preco)}</div>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="changeQty('${p.id}',-1)">−</button>
+        <span class="qty-num" id="qty-${p.id}">${qtys[p.id]}</span>
+        <button class="qty-btn" onclick="changeQty('${p.id}',1)">+</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function changeQty(id, d) {
+  qtys[id] = Math.max(0, qtys[id] + d);
+  document.getElementById(`qty-${id}`).textContent = qtys[id];
+  document.getElementById(`badge-${id}`).textContent = qtys[id];
+  document.getElementById(`card-${id}`).classList.toggle('selected', qtys[id] > 0);
+  renderResumo();
+}
+
+// ── RENDER RESUMO ─────────────────────────────────────────────────
+function renderResumo() {
+  const ativos = PRODS.filter(p => qtys[p.id] > 0);
+  const lista = document.getElementById('resumoLista');
+  const totalEl = document.getElementById('totalVal');
+  const stickyEl = document.getElementById('totalSticky');
+
+  if (!ativos.length) {
+    lista.innerHTML = '<div class="resumo-vazio">Nenhum produto selecionado ainda.</div>';
+    totalEl.textContent = 'R$ 0,00';
+    stickyEl.textContent = 'R$ 0,00';
+    return;
+  }
+
+  let total = 0;
+  lista.innerHTML = ativos.map(p => {
+    const sub = qtys[p.id] * p.preco;
+    total += sub;
+    return `
+      <div class="resumo-item">
+        <div>
+          <div class="ri-nome">${p.emoji} ${p.nome}</div>
+          <div class="ri-qtd">${qtys[p.id]}x ${fmt(p.preco)} cada</div>
+        </div>
+        <div class="ri-sub">${fmt(sub)}</div>
+      </div>`;
+  }).join('');
+
+  const fTotal = fmt(total);
+  totalEl.textContent = fTotal;
+  stickyEl.textContent = fTotal;
+}
+
+// ── MASKS ─────────────────────────────────────────────────────────
+function maskFone(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,11);
+  if (v.length > 6) v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+  else if (v.length > 2) v = `(${v.slice(0,2)}) ${v.slice(2)}`;
+  else if (v.length) v = `(${v}`;
+  el.value = v;
+}
+
+function maskCEP(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,8);
+  if (v.length > 5) v = v.slice(0,5) + '-' + v.slice(5);
+  el.value = v;
+}
+
+// ── CEP LOOKUP ────────────────────────────────────────────────────
+async function lookupCEP() {
+  const cep = document.getElementById('f-cep').value.replace(/\D/g,'');
+  if (cep.length !== 8) return;
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    const d = await r.json();
+    if (d.erro || d.localidade?.toLowerCase() !== 'itu') {
+      document.getElementById('f-cep').classList.add('erro');
+      showToast('⚠️ No momento, aceitamos pedidos apenas para Itu/SP.');
+      document.getElementById('f-end').value = '';
+      document.getElementById('f-bairro').value = '';
+      return;
+    }
+    document.getElementById('f-cep').classList.remove('erro');
+    if (d.logradouro) document.getElementById('f-end').value = d.logradouro;
+    if (d.bairro) document.getElementById('f-bairro').value = d.bairro;
+    showToast('✅ Endereço preenchido automaticamente!');
+  } catch(e) { /* silent – CEP lookup opcional */ }
+}
+
+// ── VALIDAÇÃO ─────────────────────────────────────────────────────
+function validar() {
+  const erros = [];
+  const obrig = [
+    { id:'f-nome',   msg:'Nome completo é obrigatório' },
+    { id:'f-tel',    msg:'WhatsApp é obrigatório' },
+    { id:'f-cep',    msg:'CEP é obrigatório' },
+    { id:'f-end',    msg:'Endereço completo é obrigatório' },
+    { id:'f-bairro', msg:'Bairro é obrigatório' },
+  ];
+  obrig.forEach(c => {
+    const el = document.getElementById(c.id);
+    if (!el.value.trim()) { el.classList.add('erro'); erros.push(c.msg); }
+    else el.classList.remove('erro');
+  });
+
+  const cep = document.getElementById('f-cep').value.replace(/\D/g,'');
+  if (cep.length === 8 && !cep.startsWith('1330')) {
+    document.getElementById('f-cep').classList.add('erro');
+    erros.push('No momento, aceitamos pedidos apenas para Itu/SP.');
+  }
+
+  if (!PRODS.some(p => qtys[p.id] > 0))
+    erros.push('Selecione pelo menos um produto para continuar.');
+
+  return erros;
+}
+
+// ── MONTAR TEXTO PEDIDO ───────────────────────────────────────────
+function buildTexto() {
+  const ativos = PRODS.filter(p => qtys[p.id] > 0);
+  const total = ativos.reduce((s,p) => s + qtys[p.id]*p.preco, 0);
+  const comp = document.getElementById('f-comp').value.trim();
+  const obs = document.getElementById('f-obs').value.trim();
+
+  let t = `🏆 *PEDIDO COPA 2026*\n`;
+  t += `━━━━━━━━━━━━━━━━\n\n`;
+  t += `👤 *Nome:* ${document.getElementById('f-nome').value.trim()}\n`;
+  t += `📱 *WhatsApp:* ${document.getElementById('f-tel').value.trim()}\n\n`;
+  t += `📍 *Endereço:* ${document.getElementById('f-end').value.trim()}${comp ? ', '+comp : ''}\n`;
+  t += `🏘️ *Bairro:* ${document.getElementById('f-bairro').value.trim()}\n`;
+  t += `🏙️ *Cidade:* Itu/SP\n`;
+  t += `📮 *CEP:* ${document.getElementById('f-cep').value.trim()}\n`;
+  if (obs) t += `💬 *Obs:* ${obs}\n`;
+
+  t += `\n📦 *Produtos escolhidos:*\n`;
+  ativos.forEach(p => {
+    const sub = qtys[p.id] * p.preco;
+    t += `  ${p.emoji} ${p.nome}\n`;
+    t += `     ${qtys[p.id]}x ${fmt(p.preco)} = *${fmt(sub)}*\n`;
+  });
+
+  t += `\n💰 *TOTAL: ${fmt(total)}*\n\n`;
+  t += `_Pedido enviado pelo site — Copa 2026_`;
+  return { texto: t, total };
+}
+
+// ── ENVIAR PEDIDO ─────────────────────────────────────────────────
+async function enviarPedido() {
+  const erros = validar();
+  const erroBox = document.getElementById('erroBox');
+
+  if (erros.length) {
+    erroBox.innerHTML = erros.map(e => `⚠️ ${e}`).join('<br>');
+    erroBox.classList.add('show');
+    erroBox.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+
+  erroBox.classList.remove('show');
+  const btn = document.getElementById('btnEnviar');
+  const txt = document.getElementById('btnTxt');
+  btn.disabled = true;
+  txt.innerHTML = '<span class="spinner"></span> Enviando...';
+
+  const { texto, total } = buildTexto();
+
+  // Netlify Forms (AJAX)
+  try {
+    const p = new URLSearchParams();
+    p.append('form-name','pedido-copa');
+    p.append('bot-field','');
+    p.append('nome',         document.getElementById('f-nome').value.trim());
+    p.append('whatsapp',     document.getElementById('f-tel').value.trim());
+    p.append('cep',          document.getElementById('f-cep').value.trim());
+    p.append('endereco',     document.getElementById('f-end').value.trim());
+    p.append('complemento',  document.getElementById('f-comp').value.trim());
+    p.append('bairro',       document.getElementById('f-bairro').value.trim());
+    p.append('cidade',       'Itu');
+    p.append('estado',       'SP');
+    p.append('observacoes',  document.getElementById('f-obs').value.trim());
+    p.append('resumo-pedido',texto);
+    p.append('total',        fmt(total));
+    await fetch('/',{ method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString() });
+  } catch(e) { /* falha silenciosa, WhatsApp ainda funciona */ }
+
+  // WhatsApp link
+  const wppLink = `https://wa.me/${WPP_LOJA}?text=${encodeURIComponent(texto)}`;
+  document.getElementById('btnWpp').href = wppLink;
+  document.getElementById('sucTotalVal').textContent = fmt(total);
+
+  btn.disabled = false;
+  txt.innerHTML = '⚽ ENVIAR PEDIDO';
+  document.getElementById('sucesso').classList.add('show');
+}
+
+function novoPedido() {
+  document.getElementById('sucesso').classList.remove('show');
+  PRODS.forEach(p => qtys[p.id] = 0);
+  renderProdutos();
+  renderResumo();
+  document.querySelectorAll('.finput:not(.locked), .ftextarea').forEach(el => el.value = '');
+  document.querySelectorAll('.finput').forEach(el => el.classList.remove('erro'));
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+let toastT;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+// INIT
+renderProdutos();
+renderResumo();
+</script>
+</body>
+</html>
