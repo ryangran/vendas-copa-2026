@@ -121,7 +121,9 @@ main{max-width:600px;margin:0 auto;padding:22px 16px 130px;}
 .qty-btn:active{transform:scale(.88);}
 .prod-card.selected .qty-btn{border-color:var(--verde-claro);}
 .qty-btn:hover{background:var(--verde);color:#fff;border-color:var(--verde);}
-.qty-num{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;min-width:26px;text-align:center;}
+.qty-num{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;width:44px;text-align:center;border:2px solid var(--borda);border-radius:8px;padding:3px 4px;outline:none;background:#fff;color:var(--texto);transition:border-color .15s;}
+.qty-num:focus{border-color:var(--verde-claro);}
+.prod-card.selected .qty-num{border-color:var(--verde-claro);}
 
 /* ── RESUMO ── */
 .resumo-box{
@@ -425,19 +427,27 @@ function renderProdutos() {
       <div class="prod-preco">${fmt(p.preco)}</div>
       <div class="qty-ctrl">
         <button class="qty-btn" onclick="changeQty('${p.id}',-1)">−</button>
-        <span class="qty-num" id="qty-${p.id}">${qtys[p.id]}</span>
+        <input type="number" class="qty-num" id="qty-${p.id}" value="${qtys[p.id]}" min="0" inputmode="numeric"
+               oninput="setQty('${p.id}', this.value)"
+               onblur="if(!this.value||this.value<0){setQty('${p.id}',0)}"
+               onclick="this.select()">
         <button class="qty-btn" onclick="changeQty('${p.id}',1)">+</button>
       </div>
     </div>
   `).join('');
 }
 
-function changeQty(id, d) {
-  qtys[id] = Math.max(0, qtys[id] + d);
-  document.getElementById(`qty-${id}`).textContent = qtys[id];
+function setQty(id, val) {
+  qtys[id] = Math.max(0, parseInt(val) || 0);
+  const inp = document.getElementById(`qty-${id}`);
+  if (inp && parseInt(inp.value) !== qtys[id]) inp.value = qtys[id];
   document.getElementById(`badge-${id}`).textContent = qtys[id];
   document.getElementById(`card-${id}`).classList.toggle('selected', qtys[id] > 0);
   renderResumo();
+}
+
+function changeQty(id, d) {
+  setQty(id, (qtys[id] || 0) + d);
 }
 
 // ── RENDER RESUMO ─────────────────────────────────────────────────
