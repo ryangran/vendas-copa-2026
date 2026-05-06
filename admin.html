@@ -63,6 +63,9 @@
   .card { background:var(--card); border:1.5px solid var(--borda); border-radius:12px; overflow:hidden; transition:transform .15s,box-shadow .15s; }
   .card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.09); }
   .card.pago { border-color:var(--verde-claro); background:#f0fff6; }
+  .card.online { border-top: 3px solid #0066cc; }
+  .online-tag { display:inline-flex;align-items:center;gap:3px;font-size:.6rem;font-weight:700;background:#dbeafe;color:#1d4ed8;border-radius:100px;padding:2px 8px;letter-spacing:.5px;vertical-align:middle;margin-left:5px; }
+  .obs-linha { font-size:.74rem;color:#555;background:#fafafa;border-top:1px dashed var(--borda);padding:7px 17px;font-style:italic; }
 
   .card-header { display:flex; align-items:center; justify-content:space-between; padding:15px 17px 11px; border-bottom:1px solid var(--borda); gap:8px; }
   .client-avatar { width:36px; height:36px; border-radius:50%; background:var(--verde); color:#fff; font-family:'Bebas Neue',sans-serif; font-size:1.1rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -372,7 +375,7 @@ const STORAGE_KEY = 'vendas_copa_2026';
 const PIX_CHAVE = '61.986.179/0001-92';
 const PIX_NOME = 'Ryan Granchelli';
 
-const PRECOS = { pacote:5.80, capaMole:20.92, capaDuraNormal:61.62, capaDuraPrata:65.92, capaDuraOuro:66.92 };
+const PRECOS = { pacote:5.90, capaMole:21.92, capaDuraNormal:62.62, capaDuraPrata:66.92, capaDuraOuro:67.92 };
 const CUSTOS = { pacote:5.60, capaMole:19.92, capaDuraNormal:59.62, capaDuraPrata:63.92, capaDuraOuro:63.92 };
 const TIPO_LABEL = { capaMole:'Álbum Capa Mole', capaDuraNormal:'Álbum Capa Dura Normal', capaDuraPrata:'Álbum Capa Dura Prata', capaDuraOuro:'Álbum Capa Dura Ouro ✨' };
 
@@ -674,18 +677,23 @@ function renderGrid() {
 
   grid.innerHTML=lista.map(c=>{
     const isPago=c.pago;
+    const isOnline=c.fonte==='online';
     const itens=[];
     if(c.pacotes>0) itens.push('<div class="item-line"><div class="item-desc"><span>🎴</span>'+c.pacotes+'x Pacotinho</div><div class="item-price">'+fmt(c.pacotes*PRECOS.pacote)+'</div></div>');
     c.albums.forEach(a=>itens.push('<div class="item-line"><div class="item-desc"><span>📚</span>'+a.qtd+'x '+TIPO_LABEL[a.tipo]+'</div><div class="item-price">'+fmt(a.qtd*PRECOS[a.tipo])+'</div></div>'));
     const entregaOpts=['pendente','separado','entregue'].map(e=>'<option value="'+e+'"'+(c.entrega===e?' selected':'')+'>'+e.charAt(0).toUpperCase()+e.slice(1)+'</option>').join('');
     const temTel=(c.tel||'').replace(/\D/g,'').length>0;
-    return '<div class="card'+(isPago?' pago':'')+'" id="card-'+c.id+'">'+
+    return '<div class="card'+(isPago?' pago':'')+(isOnline?' online':'')+'" id="card-'+c.id+'">'+
       '<div class="card-header">'+
         '<div class="client-avatar">'+c.nome.charAt(0).toUpperCase()+'</div>'+
-        '<div class="client-info"><div class="client-name">'+c.nome+'</div>'+(c.ref?'<div class="client-ref">'+c.ref+'</div>':'')+'</div>'+
+        '<div class="client-info">'+
+          '<div class="client-name">'+c.nome+(isOnline?'<span class="online-tag">🌐 Online</span>':'')+'</div>'+
+          (c.ref?'<div class="client-ref">'+c.ref+'</div>':'')+
+        '</div>'+
         '<button class="status-badge'+(isPago?' pago':'')+'" onclick="togglePago('+c.id+')">'+(isPago?'Pago ✓':'Pendente')+'</button>'+
       '</div>'+
       '<div class="card-body">'+(itens.join('')||'<div style="font-size:.8rem;color:#999;padding:3px 0">Sem itens</div>')+'</div>'+
+      (c.obs?'<div class="obs-linha">💬 '+c.obs+'</div>':'')+
       '<div class="entrega-row"><span class="entrega-label">Entrega:</span><select class="entrega-select" onchange="setEntrega('+c.id+',this.value)">'+entregaOpts+'</select></div>'+
       '<div class="card-footer"><div class="total-label">Total</div><div class="total-value">'+fmt(c.total)+'</div></div>'+
       '<div class="card-actions">'+
@@ -711,11 +719,17 @@ function renderSummary() {
   const lucroRecebido= estado.filter(c=>c.pago).reduce((s,c)=>s+(c.total-calcCusto(c)),0);
   const pct = totalGeral>0 ? ((lucroTotal/totalGeral)*100).toFixed(1) : '0.0';
 
+  const totalOnline = estado.filter(c=>c.fonte==='online').length;
+  const onlineHtml = totalOnline>0
+    ? '<div class="sum-item" style="border-left:2px solid #3b82f6;padding-left:16px;margin-left:4px;"><div class="sum-label" style="color:#93c5fd;">🌐 Pedidos Online</div><div class="sum-value" style="color:#60a5fa;">'+totalOnline+'</div></div>'
+    : '';
+
   document.getElementById('summaryBar').innerHTML=
     '<div class="sum-item"><div class="sum-label">Clientes</div><div class="sum-value">'+estado.length+'</div></div>'+
     '<div class="sum-item"><div class="sum-label">Pacotinhos</div><div class="sum-value">'+totalPacotes+'</div></div>'+
     '<div class="sum-item"><div class="sum-label">Álbuns</div><div class="sum-value">'+totalAlbuns+'</div></div>'+
-    '<div class="sum-item"><div class="sum-label">Faturamento Total</div><div class="sum-value">'+fmt(totalGeral)+'</div></div>';
+    '<div class="sum-item"><div class="sum-label">Faturamento Total</div><div class="sum-value">'+fmt(totalGeral)+'</div></div>'+
+    onlineHtml;
 
   document.getElementById('totalsBanner').innerHTML=
     '<div class="sum-item"><div class="sum-label">💰 Total a Receber</div><div class="sum-value">'+fmt(totalGeral)+'</div></div>'+

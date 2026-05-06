@@ -610,9 +610,48 @@ async function enviarPedido() {
   document.getElementById('btnWpp').href = wppLink;
   document.getElementById('sucTotalVal').textContent = fmt(total);
 
+  salvarNaAdmin(total);
+
   btn.disabled = false;
   txt.innerHTML = '⚽ ENVIAR PEDIDO';
   document.getElementById('sucesso').classList.add('show');
+}
+
+function salvarNaAdmin(total) {
+  try {
+    const raw = localStorage.getItem('vendas_copa_2026');
+    let d = raw ? JSON.parse(raw) : { clientes: [], nextId: 0 };
+
+    const bairro   = document.getElementById('f-bairro').value.trim();
+    const endereco = document.getElementById('f-end').value.trim();
+    const comp     = document.getElementById('f-comp').value.trim();
+    const cep      = document.getElementById('f-cep').value.trim();
+    const refStr   = [bairro, endereco + (comp ? ', ' + comp : ''), 'CEP ' + cep].filter(Boolean).join(' | ');
+
+    const albums = [
+      { tipo:'capaDuraOuro',   qtd: qtys['capaDuraOuro']   || 0 },
+      { tipo:'capaDuraPrata',  qtd: qtys['capaDuraPrata']  || 0 },
+      { tipo:'capaDuraNormal', qtd: qtys['capaDuraNormal'] || 0 },
+      { tipo:'capaMole',       qtd: qtys['capaMole']       || 0 },
+    ].filter(a => a.qtd > 0);
+
+    d.clientes.push({
+      id:      d.nextId,
+      nome:    document.getElementById('f-nome').value.trim(),
+      ref:     refStr,
+      tel:     document.getElementById('f-tel').value.replace(/\D/g, ''),
+      pacotes: qtys['pacote'] || 0,
+      albums:  albums,
+      pago:    false,
+      entrega: 'pendente',
+      total:   total,
+      obs:     document.getElementById('f-obs').value.trim(),
+      fonte:   'online',
+      ts:      Date.now(),
+    });
+    d.nextId = d.nextId + 1;
+    localStorage.setItem('vendas_copa_2026', JSON.stringify(d));
+  } catch(e) { /* silent */ }
 }
 
 function novoPedido() {
