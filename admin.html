@@ -256,6 +256,12 @@
       </div>
       <button class="aviso-save-btn" onclick="salvarAvisoConfig()">💾 SALVAR NOTIFICAÇÃO</button>
       <p class="aviso-hint">As alterações aparecem imediatamente para quem abrir o site.</p>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);">
+        <button id="btnSyncUp" onclick="forceSyncUp()" style="width:100%;padding:10px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;transition:all .15s;">
+          ☁️ Enviar dados deste dispositivo para todos
+        </button>
+        <p class="aviso-hint" style="margin-top:6px;">Use quando os clientes deste celular/PC não apareceram em outros dispositivos.</p>
+      </div>
     </div>
   </div>
 
@@ -503,6 +509,26 @@ function salvarAvisoConfig() {
   cloudSet('config', cfg);
   renderAvisoPanel();
   showToast('✅ Notificação salva!');
+}
+
+async function forceSyncUp() {
+  const btn = document.getElementById('btnSyncUp');
+  btn.textContent = '⏳ Enviando...';
+  btn.disabled = true;
+  try {
+    const payload = { clientes: estado, nextId };
+    await cloudSet('orders', payload);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    btn.textContent = '✅ Enviado! Todos os dispositivos agora estão atualizados.';
+    showToast('✅ Dados sincronizados com sucesso!');
+  } catch(e) {
+    btn.textContent = '❌ Erro — tente novamente';
+    showToast('⚠️ Falha ao sincronizar');
+  }
+  setTimeout(() => {
+    btn.textContent = '☁️ Enviar dados deste dispositivo para todos';
+    btn.disabled = false;
+  }, 4000);
 }
 
 function togglePedidosWrapper() {
