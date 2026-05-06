@@ -9,7 +9,12 @@ exports.handler = async (event) => {
 
   let store;
   try {
-    store = getStore({ name: 'copa', consistency: 'strong' });
+    store = getStore({
+      name: 'copa',
+      siteID: 'c826e503-7f85-4d6f-b429-2d83afd187df',
+      token: process.env.NETLIFY_API_TOKEN,
+      consistency: 'strong',
+    });
   } catch (e) {
     return reply({ error: 'Blobs indisponível: ' + e.message }, 503);
   }
