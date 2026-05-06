@@ -686,6 +686,35 @@ function showToast(msg) {
 // INIT
 renderProdutos();
 renderResumo();
+showAvisoLote();
+</script>
+
+<!-- ── AVISO LOTE ──────────────────────────────────── -->
+<div id="avisoLoteOv" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:20px;max-width:380px;width:100%;text-align:center;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.4);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);">
+    <div style="background:linear-gradient(135deg,#003d00,#006400);padding:28px 24px 20px;">
+      <div style="font-size:3rem;margin-bottom:8px;">⏳</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.9rem;color:#f5c518;letter-spacing:3px;line-height:1.1;">Pedidos<br>Indisponíveis</div>
+    </div>
+    <div style="padding:22px 24px 26px;">
+      <p style="font-size:.95rem;color:#333;line-height:1.6;margin-bottom:16px;">
+        No momento <strong>não estamos aceitando novos pedidos</strong>.<br><br>
+        🏆 Em breve abriremos o <strong style="color:#006400;">3º lote de pedidos</strong> — fique ligado!
+      </p>
+      <p style="font-size:.78rem;color:#999;margin-bottom:20px;">Acompanhe nossas redes sociais para saber quando abrir.</p>
+      <button onclick="fecharAvisoLote()" style="background:linear-gradient(135deg,#006400,#004d00);color:#fff;border:none;border-radius:10px;padding:13px 32px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer;width:100%;">ENTENDI ⚽</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showAvisoLote() {
+  const ov = document.getElementById('avisoLoteOv');
+  ov.style.display = 'flex';
+}
+function fecharAvisoLote() {
+  document.getElementById('avisoLoteOv').style.display = 'none';
+}
 </script>
 </body>
 </html>
