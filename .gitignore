@@ -10,3 +10,7 @@ Thumbs.db
 
 # Local Netlify folder
 .netlify
+
+# Build output e dependências
+dist/
+node_modules/
